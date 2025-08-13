@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import { FaUpload, FaSpinner, FaFileAlt, FaTimes, FaDownload, FaHistory } from 'react-icons/fa';
 import documentExtractor from '../utils/documentExtractor';

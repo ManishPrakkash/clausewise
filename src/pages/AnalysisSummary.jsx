@@ -5,7 +5,7 @@ import { FaDownload, FaChevronDown, FaChevronUp, FaExclamationTriangle, FaCheck 
 import Navigation from '../components/Navigation';
 import sampleImage from '../assets/sample.png'; // Import the sample image
 import jsPDF from 'jspdf'; // Ensure this import is correct
-import { generateDetailedSections, getAlertSummary } from '../utils/contractAlerts';
+import { getAlertSummary } from '../utils/contractAlerts';
 import DocumentChatbot from '../components/DocumentChatbot';
 
 const AnalysisSummary = () => {
@@ -30,10 +30,8 @@ const AnalysisSummary = () => {
         // Adjust confidence score dynamically based on alerts
         const confidenceScore = Math.max(100 - totalAlerts * 5, 0); // Deduct 5% per alert, minimum 0%
 
-        // Generate random alerts based on document type and content
-        const documentType = contractDetails.documentType || 'default';
-        const documentText = contractDetails.extractedText || contractDetails.text || '';
-        const detailedSections = generateDetailedSections(documentType, documentText);
+        // Use AI-analyzed sections from the contract details
+        const detailedSections = contractDetails.detailedSections || [];
         const alertSummary = getAlertSummary(detailedSections);
         
         setContract({
@@ -354,14 +352,82 @@ const AnalysisSummary = () => {
                   
                   {expandedSections[index] && (
                     <div className="mt-4">
-                      <p className="text-sm text-gray-500">{section.content}</p>
+                      {/* AI Analysis Content */}
+                      <div className="mb-4">
+                        <h5 className="text-sm font-medium text-gray-900 mb-2">AI Analysis:</h5>
+                        <p className="text-sm text-gray-600">{section.content}</p>
+                      </div>
                       
-                      {section.alerts.length > 0 && (
-                        <div className="mt-3 rounded-md bg-red-50 p-3">
+                      {/* Confidence Score */}
+                      {section.confidence !== undefined && (
+                        <div className="mb-4">
+                          <h5 className="text-sm font-medium text-gray-900 mb-2">Analysis Confidence:</h5>
+                          <div className="flex items-center">
+                            <div className="w-full bg-gray-200 rounded-full h-2 mr-3">
+                              <div 
+                                className={`h-2 rounded-full transition-all duration-300 ${
+                                  section.confidence >= 80 ? 'bg-green-500' :
+                                  section.confidence >= 60 ? 'bg-yellow-500' :
+                                  'bg-red-500'
+                                }`}
+                                style={{ width: `${section.confidence}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-sm text-gray-600">{section.confidence}%</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Content Availability */}
+                      {section.hasContent !== undefined && (
+                        <div className="mb-4">
+                          <h5 className="text-sm font-medium text-gray-900 mb-2">Content Status:</h5>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            section.hasContent ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {section.hasContent ? 'Content Found' : 'Content Missing'}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Alerts */}
+                      {section.alerts && section.alerts.length > 0 && (
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-medium text-gray-900 mb-2">Issues & Alerts:</h5>
                           {section.alerts.map((alert, alertIndex) => (
-                            <div key={alertIndex} className="flex">
-                              <FaExclamationTriangle className={`h-5 w-5 ${alert.level === 'critical' ? 'text-red-600' : 'text-yellow-600'}`} />
-                              <p className="ml-2 text-sm text-red-700">{alert.message}</p>
+                            <div
+                              key={alertIndex}
+                              className={`p-3 rounded-md ${
+                                alert.level === 'critical' ? 'bg-red-50 border border-red-200' :
+                                alert.level === 'error' ? 'bg-red-50 border border-red-200' :
+                                alert.level === 'warning' ? 'bg-yellow-50 border border-yellow-200' :
+                                alert.level === 'info' ? 'bg-blue-50 border border-blue-200' :
+                                'bg-gray-50 border border-gray-200'
+                              }`}
+                            >
+                              <div className="flex items-start">
+                                <div className="flex-shrink-0">
+                                  {alert.level === 'critical' || alert.level === 'error' ? (
+                                    <FaExclamationTriangle className="h-4 w-4 text-red-400" />
+                                  ) : alert.level === 'warning' ? (
+                                    <FaExclamationTriangle className="h-4 w-4 text-yellow-400" />
+                                  ) : alert.level === 'info' ? (
+                                    <FaCheck className="h-4 w-4 text-blue-400" />
+                                  ) : (
+                                    <FaExclamationTriangle className="h-4 w-4 text-gray-400" />
+                                  )}
+                                </div>
+                                <div className="ml-3">
+                                  <p className={`text-sm ${
+                                    alert.level === 'critical' || alert.level === 'error' ? 'text-red-800' :
+                                    alert.level === 'warning' ? 'text-yellow-800' :
+                                    alert.level === 'info' ? 'text-blue-800' :
+                                    'text-gray-800'
+                                  }`}>
+                                    {alert.message}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </div>
