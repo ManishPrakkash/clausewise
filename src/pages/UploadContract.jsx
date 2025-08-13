@@ -6,7 +6,7 @@ import { FaFileUpload, FaTrash, FaExclamationCircle } from 'react-icons/fa';
 import Navigation from '../components/Navigation';
 import Tesseract from 'tesseract.js';
 import { summarizeText } from '../utils/textUtils'; // Import summarization utility
-import { extractKeyPoints } from '../utils/keyPointsExtractor'; // Correct import for key points utility
+import { extractKeyPoints } from '../utils/points'; // Use free key points extractor (no API keys)
 
 const UploadContract = () => {
   const navigate = useNavigate();

@@ -69,12 +69,12 @@ const Dashboard = () => {
     .slice(0, 3); // Show only the most recent three contracts
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen">
       <Navigation />
       <div className="py-10">
         <header className="relative">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 className="text-3xl font-bold leading-tight text-black-900">Dashboard</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           </div>
         </header>
         
@@ -83,18 +83,18 @@ const Dashboard = () => {
             {/* Stats Panel */}
             <div className="mt-8">
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-                <div className="bg-white overflow-hidden shadow rounded-lg">
-                  <div className="px-4 py-5 sm:p-6">
+                <div className="glass overflow-hidden rounded-2xl">
+                  <div className="px-5 py-6">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 bg-primary-500 rounded-md p-3">
-                        <FaFileAlt className="h-8 w-6 text-black" /> {/* Icon for Total Contracts Scanned */}
+                      <div className="flex-shrink-0 rounded-lg p-3 bg-gradient-to-tr from-primary-600 to-blue-500">
+                        <FaFileAlt className="h-8 w-6 text-white" />
                       </div>
                       <div className="ml-5 w-0 flex-1">
                         <dt className="text-sm font-medium text-gray-500 truncate">
                           Total Contracts Scanned
                         </dt>
                         <dd className="flex items-baseline">
-                          <div className="text-2xl font-semibold text-gray-900">
+                          <div className="text-2xl font-semibold">
                             {stats.totalContracts}
                           </div>
                         </dd>
@@ -103,10 +103,10 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                <div className="bg-white overflow-hidden shadow rounded-lg">
-                  <div className="px-4 py-5 sm:p-6">
+                <div className="glass overflow-hidden rounded-2xl">
+                  <div className="px-5 py-6">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 bg-red-500 rounded-md p-3">
+                      <div className="flex-shrink-0 rounded-lg p-3 bg-red-500">
                         <FaExclamationTriangle className="h-6 w-6 text-white" />
                       </div>
                       <div className="ml-5 w-0 flex-1">
@@ -114,7 +114,7 @@ const Dashboard = () => {
                           Total Alerts Found
                         </dt>
                         <dd className="flex items-baseline">
-                          <div className="text-2xl font-semibold text-gray-900">
+                          <div className="text-2xl font-semibold">
                             {stats.alertsFound}
                           </div>
                         </dd>
@@ -123,10 +123,10 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                <div className="bg-white overflow-hidden shadow rounded-lg">
-                  <div className="px-4 py-5 sm:p-6">
+                <div className="glass overflow-hidden rounded-2xl">
+                  <div className="px-5 py-6">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 bg-yellow-500 rounded-md p-3">
+                      <div className="flex-shrink-0 rounded-lg p-3 bg-yellow-500">
                         <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -136,7 +136,7 @@ const Dashboard = () => {
                           Pending Contracts
                         </dt>
                         <dd className="flex items-baseline">
-                          <div className="text-2xl font-semibold text-gray-900">
+                          <div className="text-2xl font-semibold">
                             {stats.pendingContracts}
                           </div>
                         </dd>
@@ -148,7 +148,7 @@ const Dashboard = () => {
             </div>
 
             {/* Search and Filter */}
-            <div className="mt-8 flex flex-col md:flex-row justify-between items-center">
+              <div className="mt-8 flex flex-col md:flex-row justify-between items-center">
               <div className="w-full md:w-1/2 mb-4 md:mb-0">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -156,7 +156,7 @@ const Dashboard = () => {
                   </div>
                   <input
                     type="text"
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                      className="block w-full pl-10 pr-3 py-2 rounded-lg leading-5 bg-white/80 dark:bg-gray-800/60 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm border border-white/30 dark:border-gray-700/40 glass"
                     placeholder="Search contracts..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -167,14 +167,14 @@ const Dashboard = () => {
               <div className="flex space-x-2">
                 <button
                   onClick={toggleFilter} // Toggle filter status
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                    className="btn-secondary"
                 >
                   <FaFilter className="mr-2" /> {filterStatus === 'Processing' ? 'Show Completed' : filterStatus === 'Completed' ? 'Show All' : 'Show Processing'}
                 </button>
                 
                 <Link
                   to="/upload"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                    className="btn-primary"
                 >
                   <FaFileUpload className="mr-2" /> Upload New Contract
                 </Link>
@@ -192,18 +192,18 @@ const Dashboard = () => {
               ) : (
                 <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredContracts.map((contract) => (
-                    <div key={contract.id} className="bg-white overflow-hidden shadow rounded-lg">
+                    <div key={contract.id} className="glass overflow-hidden rounded-2xl">
                       <div className="p-5">
                         <div className="flex items-center">
                           <div className="flex-shrink-0">
                             <img 
                               src={contract.thumbnail} 
                               alt={contract.title} 
-                              className="h-32 w-24 object-cover rounded border border-gray-200" 
+                              className="h-32 w-24 object-cover rounded-lg border border-white/30 dark:border-gray-700/40" 
                             />
                           </div>
                           <div className="ml-5">
-                            <h3 className="text-lg font-medium text-gray-900">{contract.title}</h3>
+                            <h3 className="text-lg font-medium">{contract.title}</h3>
                             <p className="text-sm text-gray-500">Uploaded: {contract.uploadDate}</p>
                             <div className="mt-2">
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -223,7 +223,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="bg-gray-50 px-5 py-3">
+                      <div className="px-5 py-3">
                         <Link
                           to={`/analysis-summary/${contract.id}`} // Updated path to match AnalysisSummary route
                           className="text-sm font-medium text-primary-600 hover:text-primary-500"

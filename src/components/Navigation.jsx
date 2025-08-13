@@ -11,11 +11,12 @@ const Navigation = ({ setIsAuthenticated }) => {
   });
 
   useEffect(() => {
+    const root = document.documentElement;
     if (isDarkMode) {
-      document.body.classList.add('dark');
+      root.classList.add('dark');
       localStorage.setItem('theme', 'dark');
     } else {
-      document.body.classList.remove('dark');
+      root.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
   }, [isDarkMode]);
@@ -31,25 +32,26 @@ const Navigation = ({ setIsAuthenticated }) => {
   const user = JSON.parse(localStorage.getItem('user') || '{"name": "User", "email": "user@example.com"}');
 
   return (
-    <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <nav className="sticky top-0 z-40 glass">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center">
-            <Link to="/dashboard" className="text-xl font-bold text-gray-900 dark:text-white">
-              LandVerify
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-primary-600 to-blue-500" />
+            <Link to="/dashboard" className="text-xl font-bold tracking-tight">
+              ClauseWise
             </Link>
           </div>
 
           {/* Navigation Links */}
           <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
+            <div className="ml-10 flex items-baseline space-x-1">
               <Link
                 to="/dashboard"
-                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
                   location.pathname === '/dashboard'
-                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900'
-                    : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
+                    ? 'text-primary-700 dark:text-primary-300 bg-primary-50/70 dark:bg-primary-900/40'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <FaHome />
@@ -58,10 +60,10 @@ const Navigation = ({ setIsAuthenticated }) => {
               
               <Link
                 to="/upload"
-                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
                   location.pathname === '/upload'
-                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900'
-                    : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
+                    ? 'text-primary-700 dark:text-primary-300 bg-primary-50/70 dark:bg-primary-900/40'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <FaFileUpload />
@@ -70,10 +72,10 @@ const Navigation = ({ setIsAuthenticated }) => {
               
               <Link
                 to="/land-verification"
-                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
                   location.pathname === '/land-verification'
-                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900'
-                    : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
+                    ? 'text-primary-700 dark:text-primary-300 bg-primary-50/70 dark:bg-primary-900/40'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <FaMapMarkedAlt />
@@ -82,10 +84,10 @@ const Navigation = ({ setIsAuthenticated }) => {
               
               <Link
                 to="/history"
-                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
                   location.pathname === '/history'
-                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900'
-                    : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
+                    ? 'text-primary-700 dark:text-primary-300 bg-primary-50/70 dark:bg-primary-900/40'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <FaHistory />
@@ -94,10 +96,10 @@ const Navigation = ({ setIsAuthenticated }) => {
               
               <Link
                 to="/settings"
-                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
                   location.pathname === '/settings'
-                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900'
-                    : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
+                    ? 'text-primary-700 dark:text-primary-300 bg-primary-50/70 dark:bg-primary-900/40'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <FaCog />
@@ -107,10 +109,10 @@ const Navigation = ({ setIsAuthenticated }) => {
           </div>
 
           {/* Right side items */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             {/* Notifications */}
             <button
-              className="bg-gray-200 dark:bg-gray-700 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+              className="p-2 rounded-full text-gray-600 hover:text-gray-900 dark:text-gray-300 hover:bg-gray-700/40"
               title="View notifications"
             >
               <FaBell size={16} />
@@ -119,7 +121,7 @@ const Navigation = ({ setIsAuthenticated }) => {
             {/* Dark Mode Toggle */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="bg-gray-200 dark:bg-gray-700 p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              className="p-2 rounded-full text-gray-600 hover:text-gray-900 dark:text-gray-300 hover:bg-gray-700/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
               title="Toggle theme"
             >
               {isDarkMode ? <FaSun size={16} /> : <FaMoon size={16} />}
@@ -129,12 +131,12 @@ const Navigation = ({ setIsAuthenticated }) => {
             <div className="relative">
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="bg-gray-300 dark:bg-gray-600 flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+                className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
                 aria-expanded="false"
                 aria-haspopup="true"
               >
                 <span className="sr-only">Open user menu</span>
-                <div className="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-medium">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-primary-600 to-blue-500 flex items-center justify-center text-white font-medium shadow-sm">
                   {user.name.charAt(0)}
                 </div>
               </button>

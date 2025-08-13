@@ -57,12 +57,4 @@ export const extractKeyPoints = async (inputText) => {
     return ['Error extracting key points.'];
   }
 };
-
-// Example usage
-const ocrText = `
-The Simple One Page Contract is entered into by and between [YOURNAME] and Rocky Orn (hereafter referred to as "Party B"), collectively referred to as the "Parties." Party A agrees to provide web design services to Party B in accordance with the terms outlined herein. Party B agrees to pay $2,000 upon receipt of invoice, due on January 15, 2055.
-`;
-
-extractKeyPoints(ocrText).then((keyPoints) => {
-  console.log('Key Points:', keyPoints);
-});
+ 

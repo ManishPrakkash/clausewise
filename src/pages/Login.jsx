@@ -10,6 +10,7 @@ const Login = ({ setIsAuthenticated = () => {} }) => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -17,6 +18,10 @@ const Login = ({ setIsAuthenticated = () => {} }) => {
     // Simple validation
     if (!email || !password || (!isLogin && !name)) {
       setError('All fields are required');
+      return;
+    }
+    if (!acceptedTerms) {
+      setError('You must accept the Terms and Conditions to continue.');
       return;
     }
     
@@ -52,15 +57,16 @@ const Login = ({ setIsAuthenticated = () => {} }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <div className="mx-auto h-10 w-10 rounded-xl bg-gradient-to-tr from-primary-600 to-blue-500" />
+        <h2 className="mt-6 text-3xl font-extrabold tracking-tight">
           {isLogin ? 'Sign in to your account' : 'Create your account'}
         </h2>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="glass py-8 px-6 rounded-2xl">
           {error && (
             <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
               <div className="flex">
@@ -86,7 +92,7 @@ const Login = ({ setIsAuthenticated = () => {} }) => {
                     autoComplete="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    className="appearance-none block w-full px-3 py-2 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm glass"
                   />
                 </div>
               </div>
@@ -104,7 +110,7 @@ const Login = ({ setIsAuthenticated = () => {} }) => {
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm glass"
                 />
               </div>
             </div>
@@ -121,7 +127,7 @@ const Login = ({ setIsAuthenticated = () => {} }) => {
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm glass"
                 />
               </div>
             </div>
@@ -136,11 +142,29 @@ const Login = ({ setIsAuthenticated = () => {} }) => {
               )}
             </div>
 
+            <div className="flex items-start">
+              <div className="flex items-center h-5">
+                <input
+                  id="terms"
+                  name="terms"
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+              </div>
+              <div className="ml-3 text-sm">
+                <label htmlFor="terms" className="text-gray-700">
+                  I agree to the{' '}
+                  <a href="#" className="text-primary-600 hover:underline">Terms & Conditions</a>
+                  {' '}and{' '}
+                  <a href="#" className="text-primary-600 hover:underline">Privacy Policy</a>
+                </label>
+              </div>
+            </div>
+
             <div>
-              <button
-                type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-              >
+              <button type="submit" disabled={!acceptedTerms} className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed">
                 {isLogin ? 'Sign in' : 'Sign up'}
               </button>
             </div>
@@ -158,20 +182,14 @@ const Login = ({ setIsAuthenticated = () => {} }) => {
 
             <div className="mt-6 grid grid-cols-2 gap-3">
               <div>
-                <a
-                  href="#"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
+                <a href="#" className="btn-secondary w-full">
                   <span className="sr-only">Sign in with Google</span>
                   <FaGoogle className="h-5 w-5" />
                 </a>
               </div>
 
               <div>
-                <a
-                  href="#"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
+                <a href="#" className="btn-secondary w-full">
                   <span className="sr-only">Sign in with Apple</span>
                   <FaApple className="h-5 w-5" />
                 </a>
