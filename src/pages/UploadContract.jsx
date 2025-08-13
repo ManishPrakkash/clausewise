@@ -5,9 +5,8 @@ import { useDropzone } from 'react-dropzone';
 import { FaFileUpload, FaTrash, FaExclamationCircle } from 'react-icons/fa';
 import Navigation from '../components/Navigation';
 import Tesseract from 'tesseract.js';
-import { summarizeText } from '../utils/textUtils'; // Import summarization utility
-import { extractKeyPoints } from '../utils/points'; // Use free key points extractor (no API keys)
 import { generateDetailedSections } from '../utils/contractAlerts';
+import huggingFaceService from '../utils/huggingFaceService';
 
 const UploadContract = () => {
   const navigate = useNavigate();
@@ -78,19 +77,33 @@ const UploadContract = () => {
       let keyPoints = ['No key points available.'];
 
       try {
-        summary = await summarizeText(fullText);
+        // Use Hugging Face for dynamic summary generation
+        summary = await huggingFaceService.generateSummary(fullText);
+        console.log('AI-generated summary:', summary);
       } catch (summarizationError) {
-        console.error('Error during summarization:', summarizationError);
+        console.error('Error during AI summarization:', summarizationError);
+        // Fallback to basic summary
+        summary = fullText.length > 100 ? fullText.substring(0, 100) + '...' : fullText;
       }
 
       try {
-        keyPoints = await extractKeyPoints(fullText);
+        // Use Hugging Face for dynamic key points extraction
+        keyPoints = await huggingFaceService.generateKeyPoints(fullText);
+        console.log('AI-generated key points:', keyPoints);
       } catch (keyPointsError) {
-        console.error('Error extracting key points:', keyPointsError);
+        console.error('Error extracting AI key points:', keyPointsError);
+        // Fallback to basic key points
+        keyPoints = [
+          'Document contains important terms and conditions.',
+          'Property details and ownership information included.',
+          'Payment and duration terms specified.',
+          'Legal obligations and responsibilities outlined.',
+          'Additional clauses and conditions documented.'
+        ];
       }
 
-      // Generate random alerts based on document type (default to land ownership contract)
-      const detailedSections = generateDetailedSections('land ownership contract');
+      // Generate random alerts based on document type and content (default to land ownership contract)
+      const detailedSections = generateDetailedSections('land ownership contract', fullText);
       
       const newContract = {
         id: `${Date.now()}`,

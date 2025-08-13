@@ -30,9 +30,10 @@ const AnalysisSummary = () => {
         // Adjust confidence score dynamically based on alerts
         const confidenceScore = Math.max(100 - totalAlerts * 5, 0); // Deduct 5% per alert, minimum 0%
 
-        // Generate random alerts based on document type
+        // Generate random alerts based on document type and content
         const documentType = contractDetails.documentType || 'default';
-        const detailedSections = generateDetailedSections(documentType);
+        const documentText = contractDetails.extractedText || contractDetails.text || '';
+        const detailedSections = generateDetailedSections(documentType, documentText);
         const alertSummary = getAlertSummary(detailedSections);
         
         setContract({

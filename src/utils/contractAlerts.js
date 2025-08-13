@@ -129,7 +129,7 @@ export const generateRandomAlerts = (contractType = 'default', alertCount = 3) =
 /**
  * Generate detailed sections with random alerts
  */
-export const generateDetailedSections = (contractType = 'default') => {
+export const generateDetailedSections = (contractType = 'default', documentText = '') => {
   const sections = [
     {
       title: 'Payment Terms',
@@ -173,12 +173,26 @@ export const generateDetailedSections = (contractType = 'default') => {
     }
   ];
   
-  // Add random alerts to sections
+  // Analyze document content to determine which sections need alerts
+  const docText = documentText.toLowerCase();
+  
+  // Add random alerts to sections based on document content
   sections.forEach(section => {
     const category = section.title.toLowerCase().replace(/\s+/g, '').replace(/&/g, '');
     if (alertTemplates[category]) {
-      const randomAlerts = generateRandomAlerts(contractType, Math.floor(Math.random() * 3) + 1);
-      section.alerts = randomAlerts.filter(alert => alert.category === category);
+      // Check if document mentions this category
+      const hasContent = docText.includes(category.replace(/[&]/g, '')) || 
+                        docText.includes(section.title.toLowerCase().split(' ')[0]);
+      
+      if (hasContent) {
+        // Fewer alerts if content exists
+        const randomAlerts = generateRandomAlerts(contractType, Math.floor(Math.random() * 2) + 1);
+        section.alerts = randomAlerts.filter(alert => alert.category === category);
+      } else {
+        // More alerts if content is missing
+        const randomAlerts = generateRandomAlerts(contractType, Math.floor(Math.random() * 3) + 2);
+        section.alerts = randomAlerts.filter(alert => alert.category === category);
+      }
     }
   });
   

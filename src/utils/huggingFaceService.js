@@ -8,6 +8,9 @@ class HuggingFaceService {
     
     if (this.apiKey && this.apiKey !== 'hf_xxx') {
       this.hf = new HfInference(this.apiKey);
+      console.log('✅ Hugging Face service initialized successfully');
+    } else {
+      console.log('⚠️ Hugging Face API key not configured, using fallback responses');
     }
   }
 
@@ -16,18 +19,24 @@ class HuggingFaceService {
    */
   async generateResponse(prompt, documentData, documentText) {
     if (!this.hf) {
-      throw new Error('Hugging Face API not configured. Please set REACT_APP_HUGGINGFACE_API_KEY environment variable.');
+      throw new Error('Hugging Face API not configured. Please set VITE_HUGGINGFACE_API_KEY environment variable.');
     }
 
     try {
       const context = this.buildContext(documentData, documentText);
-      const fullPrompt = `${context}\n\nUser Question: ${prompt}\n\nAnswer:`;
+      const fullPrompt = `You are a helpful document analysis assistant. Based on the following document information, answer the user's question accurately and helpfully.
+
+${context}
+
+User Question: ${prompt}
+
+Please provide a comprehensive answer based on the document content:`;
 
       const response = await this.hf.textGeneration({
         model: 'microsoft/DialoGPT-medium',
         inputs: fullPrompt,
         parameters: {
-          max_new_tokens: 300,
+          max_new_tokens: 400,
           temperature: 0.7,
           top_p: 0.9,
           do_sample: true,
@@ -39,6 +48,74 @@ class HuggingFaceService {
     } catch (error) {
       console.error('Hugging Face API error:', error);
       return this.getFallbackResponse(prompt, documentData);
+    }
+  }
+
+  /**
+   * Generate document summary using Hugging Face
+   */
+  async generateSummary(documentText) {
+    if (!this.hf) {
+      return this.getFallbackSummary(documentText);
+    }
+
+    try {
+      const prompt = `Please provide a concise summary of the following document in 2-3 sentences: ${documentText}`;
+      
+      const response = await this.hf.textGeneration({
+        model: 'microsoft/DialoGPT-medium',
+        inputs: prompt,
+        parameters: {
+          max_new_tokens: 200,
+          temperature: 0.5,
+          top_p: 0.9,
+          do_sample: true,
+          return_full_text: false
+        }
+      });
+
+      return response.generated_text || this.getFallbackSummary(documentText);
+    } catch (error) {
+      console.error('Hugging Face summary error:', error);
+      return this.getFallbackSummary(documentText);
+    }
+  }
+
+  /**
+   * Generate key points using Hugging Face
+   */
+  async generateKeyPoints(documentText) {
+    if (!this.hf) {
+      return this.getFallbackKeyPoints(documentText);
+    }
+
+    try {
+      const prompt = `Extract 5 key points from the following document. Each point should be a complete sentence: ${documentText}`;
+      
+      const response = await this.hf.textGeneration({
+        model: 'microsoft/DialoGPT-medium',
+        inputs: prompt,
+        parameters: {
+          max_new_tokens: 300,
+          temperature: 0.6,
+          top_p: 0.9,
+          do_sample: true,
+          return_full_text: false
+        }
+      });
+
+      // Parse the response into key points
+      const text = response.generated_text || '';
+      const points = text.split(/[•\-\*]/).map(point => point.trim()).filter(point => point.length > 10);
+      
+      if (points.length >= 3) {
+        return points.slice(0, 5);
+      } else {
+        return this.getFallbackKeyPoints(documentText);
+      }
+    } catch (error) {
+      console.error('Hugging Face key points error:', error);
+      return this.getFallbackKeyPoints(documentText);
     }
   }
 
@@ -91,6 +168,51 @@ class HuggingFaceService {
     }
 
     return `Based on the document analysis, I can see this is a ${documentData?.documentType || 'document'} for ${documentData?.owner || 'the owner'}. The property is located at ${documentData?.surveyNumber || 'the specified survey number'} covering ${documentData?.area || 'the specified area'} in ${documentData?.district || 'the district'}. Please ask me specific questions about terms, risks, or obligations for more detailed information.`;
+  }
+
+  /**
+   * Get fallback summary when API fails
+   */
+  getFallbackSummary(documentText) {
+    if (!documentText || documentText.length < 50) {
+      return 'Document summary not available. Please review the document content manually.';
+    }
+
+    const sentences = documentText.split(/[.!?]+/).filter(s => s.trim().length > 20);
+    if (sentences.length >= 2) {
+      return sentences.slice(0, 2).join('. ') + '.';
+    } else if (sentences.length === 1) {
+      return sentences[0] + '.';
+    } else {
+      return 'Document contains important information that requires careful review.';
+    }
+  }
+
+  /**
+   * Get fallback key points when API fails
+   */
+  getFallbackKeyPoints(documentText) {
+    if (!documentText || documentText.length < 50) {
+      return [
+        'Document contains important terms and conditions.',
+        'Property details and ownership information included.',
+        'Payment and duration terms specified.',
+        'Legal obligations and responsibilities outlined.',
+        'Additional clauses and conditions documented.'
+      ];
+    }
+
+    const sentences = documentText
+      .split(/[.!?]+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 20 && s.length < 200)
+      .slice(0, 5);
+
+    while (sentences.length < 5) {
+      sentences.push('Additional information available in the document.');
+    }
+
+    return sentences;
   }
 
   /**
