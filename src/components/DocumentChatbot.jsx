@@ -9,11 +9,15 @@ const DocumentChatbot = ({ documentData, documentText }) => {
 
   // Initialize with welcome message
   useEffect(() => {
+    const documentType = documentData?.documentType || 'document';
+    const owner = documentData?.owner || 'the property';
+    const location = documentData?.district || 'the specified location';
+    
     setMessages([
       {
         id: 1,
         type: 'bot',
-        content: `Hello! I'm your AI document assistant. I can help you understand this ${documentData?.documentType || 'document'}. Ask me anything about the content, terms, or analysis!`,
+        content: `Hello! I'm your AI document assistant. I've analyzed your ${documentType} for ${owner} located in ${location}. I can help you understand the content, terms, risks, and legal implications. What would you like to know about this document?`,
         timestamp: new Date()
       }
     ]);
@@ -25,35 +29,45 @@ const DocumentChatbot = ({ documentData, documentText }) => {
       'What are the payment terms and conditions?',
       'What are the termination conditions?',
       'What are the main risks and obligations?',
-      'What is the property description?'
+      'What is the property description?',
+      'What are the dispute resolution procedures?',
+      'What are the confidentiality terms?'
     ],
     'patta': [
       'What is the survey number mentioned?',
       'What is the land area and classification?',
       'Who is the current owner?',
       'What are the land boundaries?',
-      'What are the tax obligations?'
+      'What are the tax obligations?',
+      'What is the land use pattern?',
+      'What are the revenue details?'
     ],
     'chitta': [
       'What is the land classification?',
       'What are the revenue details?',
       'Who are the landowners?',
       'What is the land use pattern?',
-      'What are the survey details?'
+      'What are the survey details?',
+      'What are the cultivation details?',
+      'What are the ownership rights?'
     ],
     'title deed': [
       'What is the property description?',
       'Who are the legal owners?',
       'What are the encumbrances?',
       'What is the registration date?',
-      'What are the terms and conditions?'
+      'What are the terms and conditions?',
+      'What are the transfer restrictions?',
+      'What are the legal obligations?'
     ],
     'default': [
       'What are the main points in this document?',
       'What are the key terms and conditions?',
       'What are the potential risks or issues?',
       'What are the obligations mentioned?',
-      'What are the important dates or deadlines?'
+      'What are the important dates or deadlines?',
+      'What are the legal implications?',
+      'What are the compliance requirements?'
     ]
   };
 

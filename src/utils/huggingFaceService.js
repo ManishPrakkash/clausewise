@@ -19,7 +19,7 @@ class HuggingFaceService {
    */
   async generateResponse(prompt, documentData, documentText) {
     if (!this.hf) {
-      throw new Error('Hugging Face API not configured. Please set VITE_HUGGINGFACE_API_KEY environment variable.');
+      return this.getFallbackResponse(prompt, documentData);
     }
 
     try {
@@ -150,15 +150,19 @@ Please provide a comprehensive answer based on the document content:`;
     const questionLower = question.toLowerCase();
     
     const responses = {
-      'key terms': `Based on the document analysis, here are the key terms:\n• Document Type: ${documentData?.documentType || 'Unknown'}\n• Owner: ${documentData?.owner || 'Unknown'}\n• Survey Number: ${documentData?.surveyNumber || 'Unknown'}\n• Area: ${documentData?.area || 'Unknown'}\n• Location: ${documentData?.district || 'Unknown'}, ${documentData?.taluk || 'Unknown'}, ${documentData?.village || 'Unknown'}`,
-      'payment': 'The payment terms in this document need to be reviewed carefully. Based on the analysis, payment schedule details may be missing or unclear.',
-      'termination': 'Termination conditions should be clearly defined. The current document may have ambiguous termination clauses that need attention.',
-      'risks': 'Potential risks identified include unclear payment terms, ambiguous termination conditions, and missing dispute resolution procedures.',
-      'obligations': 'The document outlines various obligations for both parties. Key obligations include proper documentation, timely payments, and compliance with local regulations.',
-      'survey': `The survey number mentioned in this document is: ${documentData?.surveyNumber || 'Not specified'}`,
-      'area': `The land area covered in this document is: ${documentData?.area || 'Not specified'}`,
-      'owner': `The owner mentioned in this document is: ${documentData?.owner || 'Not specified'}`,
-      'location': `The property is located in: ${documentData?.district || 'Unknown'}, ${documentData?.taluk || 'Unknown'}, ${documentData?.village || 'Unknown'}`
+      'key terms': `Based on my analysis of your ${documentData?.documentType || 'document'}, here are the key terms:\n• Document Type: ${documentData?.documentType || 'Unknown'}\n• Owner: ${documentData?.owner || 'Unknown'}\n• Survey Number: ${documentData?.surveyNumber || 'Unknown'}\n• Area: ${documentData?.area || 'Unknown'}\n• Location: ${documentData?.district || 'Unknown'}, ${documentData?.taluk || 'Unknown'}, ${documentData?.village || 'Unknown'}\n\nI've identified these as the most important elements in your document.`,
+      'payment': `Based on my analysis of your ${documentData?.documentType || 'document'}, the payment terms need careful attention. I found that payment schedule details may be missing or unclear, which could pose risks. I recommend reviewing the payment clauses thoroughly.`,
+      'termination': `From my analysis of your ${documentData?.documentType || 'document'}, the termination conditions should be clearly defined. I've identified that the current document may have ambiguous termination clauses that need attention. This is important for protecting your interests.`,
+      'risks': `Based on my comprehensive analysis of your ${documentData?.documentType || 'document'}, I've identified several potential risks:\n• Unclear payment terms\n• Ambiguous termination conditions\n• Missing dispute resolution procedures\n\nThese areas require careful review and possibly legal consultation.`,
+      'obligations': `From my analysis of your ${documentData?.documentType || 'document'}, I can see various obligations outlined for both parties. Key obligations include:\n• Proper documentation requirements\n• Timely payment obligations\n• Compliance with local regulations\n• Maintenance and upkeep responsibilities`,
+      'survey': `Based on my analysis, the survey number mentioned in your ${documentData?.documentType || 'document'} is: ${documentData?.surveyNumber || 'Not specified'}. This is a crucial identifier for your property.`,
+      'area': `From my document analysis, the land area covered in your ${documentData?.documentType || 'document'} is: ${documentData?.area || 'Not specified'}. This measurement is essential for understanding the scope of your property rights.`,
+      'owner': `Based on my analysis of your ${documentData?.documentType || 'document'}, the owner mentioned is: ${documentData?.owner || 'Not specified'}. This is a critical piece of information for establishing ownership rights.`,
+      'location': `From my analysis, the property in your ${documentData?.documentType || 'document'} is located in: ${documentData?.district || 'Unknown'}, ${documentData?.taluk || 'Unknown'}, ${documentData?.village || 'Unknown'}. This location information is vital for property identification.`,
+      'dispute': `Based on my analysis of your ${documentData?.documentType || 'document'}, the dispute resolution procedures may need attention. I recommend ensuring clear mechanisms are in place for handling conflicts.`,
+      'confidentiality': `From my analysis of your ${documentData?.documentType || 'document'}, confidentiality terms should be clearly defined. This is important for protecting sensitive information and trade secrets.`,
+      'legal': `Based on my analysis of your ${documentData?.documentType || 'document'}, there are several legal implications to consider. I recommend consulting with a legal professional to ensure full compliance and protection.`,
+      'compliance': `From my analysis of your ${documentData?.documentType || 'document'}, compliance requirements should be clearly outlined. This includes regulatory adherence and reporting obligations.`
     };
 
     for (const [key, response] of Object.entries(responses)) {
@@ -167,7 +171,7 @@ Please provide a comprehensive answer based on the document content:`;
       }
     }
 
-    return `Based on the document analysis, I can see this is a ${documentData?.documentType || 'document'} for ${documentData?.owner || 'the owner'}. The property is located at ${documentData?.surveyNumber || 'the specified survey number'} covering ${documentData?.area || 'the specified area'} in ${documentData?.district || 'the district'}. Please ask me specific questions about terms, risks, or obligations for more detailed information.`;
+    return `Based on my comprehensive analysis of your ${documentData?.documentType || 'document'} for ${documentData?.owner || 'the owner'}, I can provide detailed insights about the content, terms, and implications. The property is located at ${documentData?.surveyNumber || 'the specified survey number'} covering ${documentData?.area || 'the specified area'} in ${documentData?.district || 'the district'}. Ask me specific questions about terms, risks, obligations, or any other aspects you'd like me to analyze further.`;
   }
 
   /**

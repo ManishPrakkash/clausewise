@@ -336,8 +336,8 @@ const AnalysisSummary = () => {
                     onClick={() => toggleSection(index)}
                   >
                     <h4 className="text-md font-medium text-gray-900 flex items-center">
-                      {section.title}
-                      {section.alerts.length > 0 && (
+                      {section.title || section.key || `Section ${index + 1}`}
+                      {(section.alerts || []).length > 0 && (
                         <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                           Alert
                         </span>
