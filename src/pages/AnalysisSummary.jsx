@@ -6,6 +6,7 @@ import Navigation from '../components/Navigation';
 import sampleImage from '../assets/sample.png'; // Import the sample image
 import jsPDF from 'jspdf'; // Ensure this import is correct
 import { generateDetailedSections, getAlertSummary } from '../utils/contractAlerts';
+import DocumentChatbot from '../components/DocumentChatbot';
 
 const AnalysisSummary = () => {
   const { id } = useParams();
@@ -29,6 +30,11 @@ const AnalysisSummary = () => {
         // Adjust confidence score dynamically based on alerts
         const confidenceScore = Math.max(100 - totalAlerts * 5, 0); // Deduct 5% per alert, minimum 0%
 
+        // Generate random alerts based on document type
+        const documentType = contractDetails.documentType || 'default';
+        const detailedSections = generateDetailedSections(documentType);
+        const alertSummary = getAlertSummary(detailedSections);
+        
         setContract({
           id,
           title: contractDetails.name || 'Untitled Contract', // Fallback for missing title
@@ -36,48 +42,13 @@ const AnalysisSummary = () => {
           status: 'Completed',
           pages: history.length,
           thumbnail: contractDetails.thumbnail || sampleImage, // Fallback for missing thumbnail
-          confidenceScore, // Dynamically calculated confidence score
-          alertsCount: totalAlerts, // Total alerts count
+          confidenceScore: Math.max(100 - alertSummary.totalAlerts * 5, 0), // Dynamically calculated confidence score
+          alertsCount: alertSummary.totalAlerts, // Total alerts count
           summary: contractDetails.summary || 'No summary available.', // Use summarized text
           keyPoints: contractDetails.keyPoints || [], // Fallback for missing key points
-          detailedSections: contractDetails.detailedSections || [
-            {
-              title: 'Payment Terms',
-              content: 'The payment terms specify the amount and schedule of payments.',
-              alerts: [
-                { message: 'Payment schedule is missing.', level: 'critical' },
-                { message: 'Late payment penalties are not defined.', level: 'warning' },
-              ],
-            },
-            {
-              title: 'Contract Duration',
-              content: 'The contract duration specifies the start and end dates.',
-              alerts: [
-                { message: 'End date is not clearly defined.', level: 'critical' },
-              ],
-            },
-            {
-              title: 'Confidentiality Clause',
-              content: 'The confidentiality clause outlines the handling of sensitive information.',
-              alerts: [
-                { message: 'Confidentiality clause is missing.', level: 'critical' },
-              ],
-            },
-            {
-              title: 'Termination Clause',
-              content: 'The termination clause specifies conditions for ending the contract.',
-              alerts: [
-                { message: 'Termination conditions are ambiguous.', level: 'warning' },
-              ],
-            },
-            {
-              title: 'Dispute Resolution',
-              content: 'The dispute resolution clause specifies how disputes will be handled.',
-              alerts: [
-                { message: 'Arbitration process is not defined.', level: 'warning' },
-              ],
-            },
-          ], // Mock detailed sections with alerts
+          detailedSections: detailedSections, // Use generated sections with random alerts
+          documentData: contractDetails, // Pass document data for chatbot
+          documentText: contractDetails.extractedText || '', // Pass extracted text for chatbot
         });
       } else {
         setContract(null);
@@ -425,6 +396,14 @@ const AnalysisSummary = () => {
                   </div>
                 </div>
               </div>
+            </div>
+            
+            {/* Chatbot Section */}
+            <div className="mt-6">
+              <DocumentChatbot 
+                documentData={contract.documentData} 
+                documentText={contract.documentText}
+              />
             </div>
             
             {/* Actions Footer */}

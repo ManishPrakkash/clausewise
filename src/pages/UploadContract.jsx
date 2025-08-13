@@ -7,6 +7,7 @@ import Navigation from '../components/Navigation';
 import Tesseract from 'tesseract.js';
 import { summarizeText } from '../utils/textUtils'; // Import summarization utility
 import { extractKeyPoints } from '../utils/points'; // Use free key points extractor (no API keys)
+import { generateDetailedSections } from '../utils/contractAlerts';
 
 const UploadContract = () => {
   const navigate = useNavigate();
@@ -88,6 +89,9 @@ const UploadContract = () => {
         console.error('Error extracting key points:', keyPointsError);
       }
 
+      // Generate random alerts based on document type (default to land ownership contract)
+      const detailedSections = generateDetailedSections('land ownership contract');
+      
       const newContract = {
         id: `${Date.now()}`,
         name: files[0].name,
@@ -95,12 +99,15 @@ const UploadContract = () => {
         summary,
         keyPoints,
         thumbnail: files[0].preview,
+        detailedSections, // Add random alerts
+        documentType: 'Land Ownership Contract', // Default document type
+        extractedText: fullText, // Store extracted text for chatbot
       };
 
       const history = JSON.parse(localStorage.getItem('ocrHistory')) || [];
       history.push(newContract);
       localStorage.setItem('ocrHistory', JSON.stringify(history));
-      navigate(`/analysis-summary/${history.length}`);
+      navigate(`/analysis/${history.length}`);
     } catch (err) {
       console.error('Error during file processing:', err);
       setError('Failed to process files. Please try again.');

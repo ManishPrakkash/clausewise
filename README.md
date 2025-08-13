@@ -1,12 +1,82 @@
-# React + Vite
+# ClauseWise - Document Analysis Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern React application for analyzing land documents and contracts using OCR, AI-powered insights, and interactive chatbots.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Document Upload & OCR**: Upload images and extract text using Tesseract.js
+- **AI-Powered Analysis**: Generate summaries and key points from documents
+- **Interactive Chatbot**: Ask questions about your documents using Hugging Face AI
+- **Random Contract Alerts**: Dynamic alert generation for different document types
+- **Modern UI**: Glassmorphism design with dark/light mode support
+- **PDF Export**: Download analysis reports as PDFs
 
-## Expanding the ESLint configuration
+## Setup
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+2. **Configure Hugging Face API (Optional)**
+   
+   For enhanced chatbot functionality, create a `.env` file in the root directory:
+   ```
+   VITE_HUGGINGFACE_API_KEY=hf_your_api_key_here
+   ```
+   
+   Get your API key from: https://huggingface.co/settings/tokens
+   
+   Note: The chatbot works with fallback responses even without the API key.
+
+3. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
+
+## Usage
+
+1. **Upload Documents**: Drag and drop image files (JPG, PNG, etc.)
+2. **View Analysis**: See extracted text, summaries, and key points
+3. **Check Alerts**: Review randomly generated contract alerts
+4. **Ask Questions**: Use the chatbot to get insights about your documents
+5. **Export Reports**: Download analysis as PDF
+
+## Document Types Supported
+
+- Land Ownership Contracts
+- Patta Documents
+- Chitta Documents
+- Title Deeds
+- A-Register Documents
+- FMB Documents
+
+## Technology Stack
+
+- **Frontend**: React 19, Vite
+- **Styling**: Tailwind CSS
+- **OCR**: Tesseract.js
+- **AI**: Hugging Face Inference API
+- **PDF**: jsPDF
+- **Icons**: React Icons
+
+## Project Structure
+
+```
+src/
+├── components/          # Reusable components
+│   ├── Navigation.jsx
+│   ├── ProtectedRoute.jsx
+│   └── DocumentChatbot.jsx
+├── pages/              # Page components
+│   ├── Dashboard.jsx
+│   ├── UploadContract.jsx
+│   ├── AnalysisSummary.jsx
+│   └── ...
+├── utils/              # Utility functions
+│   ├── documentExtractor.js
+│   ├── contractAlerts.js
+│   ├── huggingFaceService.js
+│   └── ...
+└── assets/             # Static assets
+```
