@@ -5,6 +5,7 @@ import { FaDownload, FaChevronDown, FaChevronUp, FaExclamationTriangle, FaCheck 
 import Navigation from '../components/Navigation';
 import sampleImage from '../assets/sample.png'; // Import the sample image
 import jsPDF from 'jspdf'; // Ensure this import is correct
+import { generateDetailedSections, getAlertSummary } from '../utils/contractAlerts';
 
 const AnalysisSummary = () => {
   const { id } = useParams();

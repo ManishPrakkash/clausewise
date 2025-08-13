@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import { FaUpload, FaSpinner, FaFileAlt, FaTimes } from 'react-icons/fa';
+import documentExtractor from '../utils/documentExtractor';
 
 const LandVerification = ({ setIsAuthenticated }) => {
   const [files, setFiles] = useState([]);
@@ -58,42 +59,55 @@ const LandVerification = ({ setIsAuthenticated }) => {
     setError('');
 
     try {
-      // Simulate processing with mock data
-      await new Promise(resolve => setTimeout(resolve, 3000));
-
-      // Create mock verification result
-      const verificationResult = {
-        id: Date.now().toString(),
-        documentName: files[0].name,
-        uploadDate: new Date().toLocaleDateString(),
-        status: 'Verified',
-        isLegal: true,
-        ownershipType: 'Private',
-        documentType: 'Patta',
-        surveyNumber: 'SF No. 123/4',
-        district: 'Chennai',
-        taluk: 'Tambaram',
-        village: 'Perungalathur',
-        area: '2.5 acres',
-        owner: 'John Doe',
-        discrepancies: [],
-        confidence: 95,
-        verificationDetails: {
-          registrationStatus: 'Registered',
-          portalMatch: true,
-          ownershipVerified: true,
-          boundariesConfirmed: true,
-          taxStatus: 'Current'
+      const results = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        try {
+          // Process each document using OCR and data extraction
+          const verificationResult = await documentExtractor.processDocument(file);
+          results.push(verificationResult);
+        } catch (error) {
+          console.error(`Error processing ${file.name}:`, error);
+          // Create fallback result for failed documents
+          results.push({
+            id: Date.now().toString() + i,
+            documentName: file.name,
+            uploadDate: new Date().toLocaleDateString(),
+            status: 'Processing Failed',
+            isLegal: false,
+            ownershipType: 'Unknown',
+            documentType: 'Unknown',
+            surveyNumber: 'Unknown',
+            district: 'Unknown',
+            taluk: 'Unknown',
+            village: 'Unknown',
+            area: 'Unknown',
+            owner: 'Unknown',
+            classification: 'Unknown',
+            discrepancies: ['Failed to extract document information'],
+            confidence: 0,
+            verificationDetails: {
+              registrationStatus: 'Failed',
+              portalMatch: false,
+              ownershipVerified: false,
+              boundariesConfirmed: false,
+              taxStatus: 'Unknown'
+            }
+          });
         }
-      };
+      }
 
-      // Store result in localStorage
+      // Store all results in localStorage
       const existingResults = JSON.parse(localStorage.getItem('landVerificationResults')) || [];
-      existingResults.unshift(verificationResult);
+      results.forEach(result => {
+        existingResults.unshift(result);
+      });
       localStorage.setItem('landVerificationResults', JSON.stringify(existingResults));
 
-      // Navigate to results page
-      navigate(`/verification-results/${verificationResult.id}`);
+      // Navigate to results page for the first document
+      navigate(`/verification-results/${results[0].id}`);
 
     } catch (err) {
       console.error('Error processing land documents:', err);
@@ -106,12 +120,12 @@ const LandVerification = ({ setIsAuthenticated }) => {
   return (
     <>
       <Navigation setIsAuthenticated={setIsAuthenticated} />
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6">
+      <div className="min-h-screen py-6">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            <h1 className="text-3xl font-bold tracking-tight mb-4">
               Land Document Verification
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
@@ -120,7 +134,7 @@ const LandVerification = ({ setIsAuthenticated }) => {
           </div>
 
           {/* Upload Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+          <div className="glass rounded-2xl p-6 mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               Upload Land Documents
             </h2>
@@ -134,9 +148,9 @@ const LandVerification = ({ setIsAuthenticated }) => {
 
             {/* File Drop Zone */}
             <div
-              className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
                 dragOver
-                  ? 'border-primary-400 bg-primary-50 dark:bg-primary-900'
+                  ? 'border-primary-400 bg-primary-50/50 dark:bg-primary-900/30'
                   : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
               }`}
               onDrop={handleDrop}
@@ -152,7 +166,7 @@ const LandVerification = ({ setIsAuthenticated }) => {
               </div>
 
               <label className="cursor-pointer">
-                <span className="bg-primary-600 text-white px-6 py-3 rounded-md hover:bg-primary-700 transition-colors inline-block">
+                <span className="btn-primary px-6 py-3 inline-block">
                   Choose Files
                 </span>
                 <input
@@ -212,7 +226,7 @@ const LandVerification = ({ setIsAuthenticated }) => {
               <button
                 onClick={processLandDocuments}
                 disabled={files.length === 0 || isProcessing}
-                className="bg-primary-600 text-white px-8 py-3 rounded-md hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                className="btn-primary px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {isProcessing ? (
                   <>
@@ -226,7 +240,7 @@ const LandVerification = ({ setIsAuthenticated }) => {
             </div>
 
             {/* Info Section */}
-            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+            <div className="mt-6 p-4 bg-blue-50/70 dark:bg-blue-900/40 rounded-xl">
               <p className="text-sm text-blue-800 dark:text-blue-200">
                 <strong>Verification Process:</strong> Your documents will be automatically processed and verified against Tamil Nadu Land Records e-Service Portal. We check document authenticity, ownership status, and cross-reference with government databases.
               </p>
