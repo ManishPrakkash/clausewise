@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
-import { FaCheckCircle, FaExclamationTriangle, FaTimesCircle, FaDownload, FaArrowLeft } from 'react-icons/fa';
+import { FaCheckCircle, FaExclamationTriangle, FaTimesCircle, FaDownload, FaArrowLeft, FaFilePdf, FaFileAlt } from 'react-icons/fa';
+import reportGenerator from '../utils/reportGenerator';
 
 const VerificationResults = ({ setIsAuthenticated }) => {
   const { id } = useParams();
@@ -16,25 +17,32 @@ const VerificationResults = ({ setIsAuthenticated }) => {
     setLoading(false);
   }, [id]);
 
-  const downloadReport = () => {
+  const downloadReport = (format = 'pdf') => {
     if (!result) return;
 
-    const reportData = {
-      documentName: result.documentName,
-      verificationDate: new Date().toLocaleDateString(),
-      status: result.status,
-      ...result
-    };
+    if (format === 'pdf') {
+      // Generate and download PDF report
+      const filename = `land_verification_report_${result.documentName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      reportGenerator.downloadReport(result, filename);
+    } else {
+      // Download JSON report as fallback
+      const reportData = {
+        documentName: result.documentName,
+        verificationDate: new Date().toLocaleDateString(),
+        status: result.status,
+        ...result
+      };
 
-    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `land_verification_report_${result.id}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `land_verification_report_${result.id}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
   };
 
   if (loading) {
@@ -106,13 +114,24 @@ const VerificationResults = ({ setIsAuthenticated }) => {
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Verification Status
               </h2>
-              <button
-                onClick={downloadReport}
-                className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition-colors"
-              >
-                <FaDownload />
-                Download Report
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => downloadReport('pdf')}
+                  className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+                  title="Download PDF Report"
+                >
+                  <FaFilePdf />
+                  PDF Report
+                </button>
+                <button
+                  onClick={() => downloadReport('json')}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                  title="Download JSON Data"
+                >
+                  <FaFileAlt />
+                  JSON Data
+                </button>
+              </div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">

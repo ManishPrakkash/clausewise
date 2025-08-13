@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
-import { FaUpload, FaSpinner, FaFileAlt, FaTimes } from 'react-icons/fa';
+import { FaUpload, FaSpinner, FaFileAlt, FaTimes, FaDownload, FaHistory } from 'react-icons/fa';
 import documentExtractor from '../utils/documentExtractor';
+import RecentVerifications from '../components/RecentVerifications';
 
 const LandVerification = ({ setIsAuthenticated }) => {
   const [files, setFiles] = useState([]);
@@ -245,6 +246,24 @@ const LandVerification = ({ setIsAuthenticated }) => {
                 <strong>Verification Process:</strong> Your documents will be automatically processed and verified against Tamil Nadu Land Records e-Service Portal. We check document authenticity, ownership status, and cross-reference with government databases.
               </p>
             </div>
+          </div>
+
+          {/* Recent Verification Results */}
+          <div className="glass rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Recent Verifications
+              </h2>
+              <Link
+                to="/history"
+                className="flex items-center gap-2 text-primary-600 hover:text-primary-700 transition-colors"
+              >
+                <FaHistory />
+                View All
+              </Link>
+            </div>
+            
+            <RecentVerifications />
           </div>
         </div>
       </div>

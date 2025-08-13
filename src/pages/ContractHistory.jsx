@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
-import { FaSearch, FaFilter, FaFileAlt, FaMapMarkedAlt, FaEye } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaFileAlt, FaMapMarkedAlt, FaEye, FaDownload, FaFilePdf, FaFileAlt as FaFileAltIcon } from 'react-icons/fa';
+import reportGenerator from '../utils/reportGenerator';
 
 const ContractHistory = ({ setIsAuthenticated }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,6 +71,39 @@ const ContractHistory = ({ setIsAuthenticated }) => {
         {status}
       </span>
     );
+  };
+
+  const downloadReport = (doc, format = 'pdf') => {
+    if (activeTab === 'land-verification') {
+      // Find the full result data
+      const landResults = JSON.parse(localStorage.getItem('landVerificationResults')) || [];
+      const result = landResults.find(r => r.id === doc.id);
+      
+      if (result) {
+        if (format === 'pdf') {
+          const filename = `land_verification_report_${result.documentName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+          reportGenerator.downloadReport(result, filename);
+        } else {
+          // Download JSON report
+          const reportData = {
+            documentName: result.documentName,
+            verificationDate: new Date().toLocaleDateString(),
+            status: result.status,
+            ...result
+          };
+
+          const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `land_verification_report_${result.id}.json`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
+      }
+    }
   };
 
   return (
@@ -204,13 +238,47 @@ const ContractHistory = ({ setIsAuthenticated }) => {
                           </span>
                         )}
 
-                        <Link
-                          to={activeTab === 'contracts' ? `/analysis/${doc.id}` : `/verification-results/${doc.id}`}
-                          className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition-colors"
-                        >
-                          <FaEye />
-                          View
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          <Link
+                            to={activeTab === 'contracts' ? `/analysis/${doc.id}` : `/verification-results/${doc.id}`}
+                            className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition-colors"
+                          >
+                            <FaEye />
+                            View
+                          </Link>
+                          
+                          {activeTab === 'land-verification' && (
+                            <div className="relative group">
+                              <button
+                                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+                                title="Download Reports"
+                              >
+                                <FaDownload />
+                                Download
+                              </button>
+                              
+                              {/* Download dropdown */}
+                              <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                                <div className="py-1">
+                                  <button
+                                    onClick={() => downloadReport(doc, 'pdf')}
+                                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                  >
+                                    <FaFilePdf className="text-red-500" />
+                                    PDF Report
+                                  </button>
+                                  <button
+                                    onClick={() => downloadReport(doc, 'json')}
+                                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                  >
+                                    <FaFileAltIcon className="text-blue-500" />
+                                    JSON Data
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
