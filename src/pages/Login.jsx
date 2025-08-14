@@ -1,7 +1,8 @@
 // src/pages/Login.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaGoogle, FaApple } from 'react-icons/fa';
+import { hasAcceptedTerms } from '../utils/termsManager';
 
 const Login = ({ setIsAuthenticated = () => {} }) => {
   const navigate = useNavigate();
@@ -11,6 +12,12 @@ const Login = ({ setIsAuthenticated = () => {} }) => {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  useEffect(() => {
+    // Check if terms are already accepted
+    const termsAccepted = hasAcceptedTerms();
+    setAcceptedTerms(termsAccepted);
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -156,9 +163,9 @@ const Login = ({ setIsAuthenticated = () => {} }) => {
               <div className="ml-3 text-sm">
                 <label htmlFor="terms" className="text-gray-700">
                   I agree to the{' '}
-                  <a href="#" className="text-primary-600 hover:underline">Terms & Conditions</a>
+                  <a href="/terms" className="text-primary-600 hover:underline">Terms & Conditions</a>
                   {' '}and{' '}
-                  <a href="#" className="text-primary-600 hover:underline">Privacy Policy</a>
+                  <a href="/privacy" className="text-primary-600 hover:underline">Privacy Policy</a>
                 </label>
               </div>
             </div>
@@ -209,11 +216,11 @@ const Login = ({ setIsAuthenticated = () => {} }) => {
 
           <div className="mt-6 text-xs text-center text-gray-500">
             By {isLogin ? 'signing in' : 'signing up'}, you agree to our{' '}
-            <a href="#" className="text-primary-600 hover:underline">
+            <a href="/terms" className="text-primary-600 hover:underline">
               Terms of Service
             </a>{' '}
             and{' '}
-            <a href="#" className="text-primary-600 hover:underline">
+            <a href="/privacy" className="text-primary-600 hover:underline">
               Privacy Policy
             </a>
             .

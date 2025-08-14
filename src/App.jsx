@@ -10,18 +10,36 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AnalysisSummary from './pages/AnalysisSummary';
 import LandVerification from './pages/LandVerification'; // New page
 import VerificationResults from './pages/VerificationResults'; // New page
+import TermsAndConditions from './pages/TermsAndConditions'; // New page
+import PrivacyPolicy from './pages/PrivacyPolicy'; // New page
+import Landing from './pages/Landing'; // New page
+import { hasAcceptedTerms } from './utils/termsManager';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const terms = hasAcceptedTerms();
     setIsAuthenticated(!!token);
+    setTermsAccepted(terms);
   }, []);
 
   return (
     <Router>
       <Routes>
+        <Route path="/terms" element={
+          <TermsAndConditions 
+            onAccept={() => setTermsAccepted(true)}
+            onDecline={() => setTermsAccepted(false)}
+          />
+        } />
+        
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        
+        <Route path="/landing" element={<Landing />} />
+        
         <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
         
         {/* Protected Routes */}
@@ -67,7 +85,11 @@ function App() {
           </ProtectedRoute>
         } />
         
-        <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
+        <Route path="/" element={
+          <Navigate to={
+            isAuthenticated ? "/dashboard" : "/login"
+          } replace />
+        } />
       </Routes>
     </Router>
   );

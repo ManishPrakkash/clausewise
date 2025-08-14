@@ -27,7 +27,7 @@ class LandVerificationService {
         district: 'Chennai',
         taluk: 'Tambaram', 
         village: 'Perungalathur',
-        ownerName: 'John Doe',
+        ownerName: 'Ramkumar',
         area: '2.5 acres',
         classification: 'Dry Land'
       };
