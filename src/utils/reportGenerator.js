@@ -135,7 +135,7 @@ class ReportGenerator {
       this.addVerificationTable(checks);
     }
     
-    this.currentY += 15;
+    this.currentY += 20; // Increased spacing after table
   }
 
   /**
@@ -225,6 +225,8 @@ class ReportGenerator {
       this.currentY = 20;
     }
     
+    this.currentY += 5; // Add extra space before section title
+    
     this.doc.setFontSize(14);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(44, 62, 80);
@@ -256,12 +258,40 @@ class ReportGenerator {
       this.doc.setTextColor(52, 73, 94);
       this.doc.text(item.label + ':', this.margin, this.currentY);
       
-      // Value
+      // Value with text wrapping for long values
       this.doc.setFont('helvetica', 'normal');
       this.doc.setTextColor(44, 62, 80);
-      this.doc.text(item.value || 'Not specified', this.margin + 60, this.currentY);
       
-      this.currentY += 8;
+      const value = item.value || 'Not specified';
+      const maxValueWidth = this.contentWidth - 70; // Leave space for label
+      
+      if (this.doc.getTextWidth(value) > maxValueWidth) {
+        // Split long values into multiple lines
+        const words = value.split(' ');
+        let currentLine = '';
+        let lines = [];
+        
+        words.forEach(word => {
+          const testLine = currentLine + (currentLine ? ' ' : '') + word;
+          if (this.doc.getTextWidth(testLine) <= maxValueWidth) {
+            currentLine = testLine;
+          } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = word;
+          }
+        });
+        if (currentLine) lines.push(currentLine);
+        
+        // Draw each line
+        lines.forEach((line, lineIndex) => {
+          this.doc.text(line, this.margin + 60, this.currentY + (lineIndex * 4));
+        });
+        
+        this.currentY += (lines.length * 4) + 4; // Adjust spacing based on number of lines
+      } else {
+        this.doc.text(value, this.margin + 60, this.currentY);
+        this.currentY += 8;
+      }
     });
   }
 
@@ -298,7 +328,9 @@ class ReportGenerator {
    */
   addVerificationTable(checks) {
     const tableWidth = this.contentWidth;
-    const colWidth = tableWidth / 3;
+    const checkColWidth = tableWidth * 0.6; // 60% for check name
+    const statusColWidth = tableWidth * 0.2; // 20% for status
+    const resultColWidth = tableWidth * 0.2; // 20% for result
     
     // Table header
     this.doc.setFillColor(52, 152, 219);
@@ -307,9 +339,9 @@ class ReportGenerator {
     this.doc.setFontSize(10);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(255, 255, 255);
-    this.doc.text('Check', this.margin + 5, this.currentY + 8);
-    this.doc.text('Status', this.margin + colWidth + 5, this.currentY + 8);
-    this.doc.text('Result', this.margin + (colWidth * 2) + 5, this.currentY + 8);
+    this.doc.text('Verification Check', this.margin + 5, this.currentY + 8);
+    this.doc.text('Status', this.margin + checkColWidth + 5, this.currentY + 8);
+    this.doc.text('Result', this.margin + checkColWidth + statusColWidth + 5, this.currentY + 8);
     
     this.currentY += 12;
     
@@ -322,25 +354,57 @@ class ReportGenerator {
       
       const rowColor = index % 2 === 0 ? [236, 240, 241] : [255, 255, 255];
       this.doc.setFillColor(...rowColor);
-      this.doc.rect(this.margin, this.currentY, tableWidth, 10, 'F');
+      this.doc.rect(this.margin, this.currentY, tableWidth, 12, 'F'); // Increased row height
       
-      // Check name
+      // Check name with text wrapping
       this.doc.setFontSize(9);
       this.doc.setFont('helvetica', 'normal');
       this.doc.setTextColor(44, 62, 80);
-      this.doc.text(check.label, this.margin + 5, this.currentY + 7);
+      
+      // Split long check names into multiple lines if needed
+      const checkName = check.label;
+      const maxCharsPerLine = Math.floor(checkColWidth / 3); // Approximate characters per line
+      
+      if (checkName.length > maxCharsPerLine) {
+        // Split into multiple lines
+        const words = checkName.split(' ');
+        let currentLine = '';
+        let lines = [];
+        
+        words.forEach(word => {
+          if ((currentLine + ' ' + word).length <= maxCharsPerLine) {
+            currentLine += (currentLine ? ' ' : '') + word;
+          } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = word;
+          }
+        });
+        if (currentLine) lines.push(currentLine);
+        
+        // Draw each line
+        lines.forEach((line, lineIndex) => {
+          this.doc.text(line, this.margin + 5, this.currentY + 7 + (lineIndex * 4));
+        });
+      } else {
+        this.doc.text(checkName, this.margin + 5, this.currentY + 7);
+      }
       
       // Status icon
       const statusColor = check.status === 'success' ? [46, 204, 113] : 
                          check.status === 'warning' ? [241, 196, 15] : [231, 76, 60];
       this.doc.setFillColor(...statusColor);
-      this.doc.circle(this.margin + colWidth + 10, this.currentY + 5, 2, 'F');
+      this.doc.circle(this.margin + checkColWidth + 10, this.currentY + 6, 2, 'F');
       
-      // Result
-      this.doc.setTextColor(44, 62, 80);
-      this.doc.text(check.value, this.margin + (colWidth * 2) + 5, this.currentY + 7);
+      // Result with text wrapping
+      const resultText = check.value;
+      if (resultText.length > 8) {
+        // Truncate long results
+        this.doc.text(resultText.substring(0, 8) + '...', this.margin + checkColWidth + statusColWidth + 5, this.currentY + 7);
+      } else {
+        this.doc.text(resultText, this.margin + checkColWidth + statusColWidth + 5, this.currentY + 7);
+      }
       
-      this.currentY += 10;
+      this.currentY += 12; // Increased spacing between rows
     });
   }
 
