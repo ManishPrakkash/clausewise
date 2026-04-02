@@ -105,7 +105,7 @@ const Navigation = ({ setIsAuthenticated }) => {
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute right-0 mt-4 w-56 spellbook-glass rounded-2xl p-2 overflow-hidden"
+                  className="absolute right-0 mt-4 w-56 spellbook-glass rounded-2xl p-2 overflow-hidden z-[100]"
                 >
                   <div className="px-4 py-3 mb-2 border-b border-white/5">
                     <p className="text-xs font-bold text-white">{user.name}</p>
