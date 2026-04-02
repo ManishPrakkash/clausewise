@@ -11,7 +11,9 @@ import {
   Search,
   MapPin,
   ChevronRight,
-  Info
+  Info,
+  Shield,
+  ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navigation from '../components/Navigation';

@@ -10,7 +10,8 @@ import {
   Image as ImageIcon, 
   CheckCircle,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  Shield
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navigation from '../components/Navigation';

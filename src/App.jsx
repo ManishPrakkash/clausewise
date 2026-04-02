@@ -27,7 +27,6 @@ function App() {
     <Router>
       <Routes>
         <Route path="/landing" element={<Landing setIsAuthenticated={setIsAuthenticated} />} />
-        <Route path="/login" element={<Navigate to="/landing" replace />} />
         
         <Route path="/terms" element={<TermsAndConditions />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
