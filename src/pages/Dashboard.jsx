@@ -1,14 +1,26 @@
-// src/pages/Dashboard.jsx
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaFileUpload, FaSearch, FaFilter, FaExclamationTriangle, FaFileAlt } from 'react-icons/fa'; // Import icon for Total Contracts Scanned
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  AlertTriangle, 
+  FileText, 
+  Clock, 
+  CheckCircle, 
+  ArrowUpRight,
+  LayoutGrid,
+  List,
+  Layers,
+  ChevronRight
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Navigation from '../components/Navigation';
-import sampleImage from '../assets/sample.png'; // Import the sample image
 
-const Dashboard = () => {
+const Dashboard = ({ setIsAuthenticated }) => {
   const [contracts, setContracts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState(''); // Add state for filter status
+  const [filterStatus, setFilterStatus] = useState('');
   const [stats, setStats] = useState({
     totalContracts: 0,
     alertsFound: 0,
@@ -19,226 +31,252 @@ const Dashboard = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem('lastVisitedPage', 'dashboard'); // Store the current page in localStorage
+      localStorage.setItem('lastVisitedPage', 'dashboard');
       const history = JSON.parse(localStorage.getItem('ocrHistory')) || [];
-      const mockContracts = history
+      const formattedContracts = history
         .map((item, index) => ({
-          id: `${index + 1}`,
-          title: item.name || 'Untitled Contract', // Fallback for missing title
-          uploadDate: new Date().toLocaleDateString(),
-          status: item.status || 'Completed', // Fallback for missing status
-          thumbnail: item.thumbnail || sampleImage, // Fallback for missing thumbnail
-          alertsCount: item.alerts || 0, // Fallback for missing alerts
-          summary: (item.text || 'No summary available').slice(0, 100) + '...', // Fallback for missing text
+          id: item.id || `${index + 1}`,
+          title: item.name || 'Untitled Analysis',
+          uploadDate: new Date(item.timestamp || Date.now()).toLocaleDateString(),
+          status: item.status || 'Verified',
+          thumbnail: item.thumbnail,
+          alertsCount: item.detailedSections?.reduce((acc, s) => acc + (s.alerts?.length || 0), 0) || 0,
+          summary: item.summary || 'Initial analysis complete.',
+          realIndex: index + 1
         }))
-        .reverse(); // Reverse to show most recently added contracts first
-      setContracts(mockContracts);
+        .reverse();
+
+      setContracts(formattedContracts);
       setStats({
-        totalContracts: mockContracts.length,
-        alertsFound: mockContracts.reduce((acc, contract) => acc + contract.alertsCount, 0),
-        pendingContracts: mockContracts.filter((contract) => contract.status === 'Processing').length,
+        totalContracts: formattedContracts.length,
+        alertsFound: formattedContracts.reduce((acc, c) => acc + (c.alertsCount || 0), 0),
+        pendingContracts: formattedContracts.filter(c => c.status === 'Processing').length
       });
     } catch (err) {
-      console.error('Error initializing dashboard:', err); // Debugging: Log errors
-      setContracts([]);
-      setStats({
-        totalContracts: 0,
-        alertsFound: 0,
-        pendingContracts: 0,
-      });
+      console.error('Dashboard initialization error:', err);
     }
-  }, []); // Removed dependency on `localStorage.getItem('ocrHistory')` to avoid unnecessary re-renders
+  }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
-
-  const toggleFilter = () => {
-    setFilterStatus((prevStatus) => 
-      prevStatus === 'Processing' ? 'Completed' : prevStatus === 'Completed' ? '' : 'Processing'
-    ); // Toggle between "Processing", "Completed", and "Show All"
-  };
-
-  const filteredContracts = contracts
-    .filter(contract => 
-      contract.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (filterStatus === '' || contract.status === filterStatus) // Apply filter
-    )
-    .slice(0, 3); // Show only the most recent three contracts
+  const filteredContracts = contracts.filter(c => 
+    c.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (filterStatus === '' || c.status === filterStatus)
+  );
 
   return (
-    <div className="min-h-screen">
-      <Navigation />
-      <div className="py-10">
-        <header className="relative">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+    <div className="min-h-screen bg-brand-background text-white selection:bg-white/10">
+      <Navigation setIsAuthenticated={setIsAuthenticated} />
+      
+      <main className="pt-32 pb-20 px-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header Area */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
+              <h1 className="text-5xl font-serif mb-4">Command Center</h1>
+              <p className="text-white/40 max-w-sm">
+                Overview of your legal intelligence landscape and recent document audits.
+              </p>
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-4"
+            >
+              <div className="relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-white transition-colors" />
+                <input 
+                  type="text"
+                  placeholder="Search repository..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="spellbook-glass bg-white/[0.02] pl-10 pr-6 py-3 rounded-full text-sm focus:outline-none focus:border-white/20 transition-all w-64"
+                />
+              </div>
+              <Link to="/upload" className="spellbook-btn-primary py-3">
+                <Plus className="w-4 h-4" />
+                New Analysis
+              </Link>
+            </motion.div>
           </div>
-        </header>
-        
-        <main>
-          <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            {/* Stats Panel */}
-            <div className="mt-8">
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-                <div className="glass overflow-hidden rounded-2xl">
-                  <div className="px-5 py-6">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 rounded-lg p-3 bg-gradient-to-tr from-primary-600 to-blue-500">
-                        <FaFileAlt className="h-8 w-6 text-white" />
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <dt className="text-sm font-medium text-gray-500 truncate">
-                          Total Contracts Scanned
-                        </dt>
-                        <dd className="flex items-baseline">
-                          <div className="text-2xl font-semibold">
-                            {stats.totalContracts}
-                          </div>
-                        </dd>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
-                <div className="glass overflow-hidden rounded-2xl">
-                  <div className="px-5 py-6">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 rounded-lg p-3 bg-red-500">
-                        <FaExclamationTriangle className="h-6 w-6 text-white" />
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <dt className="text-sm font-medium text-gray-500 truncate">
-                          Total Alerts Found
-                        </dt>
-                        <dd className="flex items-baseline">
-                          <div className="text-2xl font-semibold">
-                            {stats.alertsFound}
-                          </div>
-                        </dd>
-                      </div>
-                    </div>
-                  </div>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="spellbook-glass p-8 rounded-[32px] relative overflow-hidden group"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <Layers className="w-6 h-6 text-white/60" />
                 </div>
-
-                <div className="glass overflow-hidden rounded-2xl">
-                  <div className="px-5 py-6">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 rounded-lg p-3 bg-yellow-500">
-                        <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <dt className="text-sm font-medium text-gray-500 truncate">
-                          Pending Contracts
-                        </dt>
-                        <dd className="flex items-baseline">
-                          <div className="text-2xl font-semibold">
-                            {stats.pendingContracts}
-                          </div>
-                        </dd>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <span className="text-[10px] uppercase tracking-widest text-white/20 font-bold">Document Repository</span>
               </div>
-            </div>
-
-            {/* Search and Filter */}
-              <div className="mt-8 flex flex-col md:flex-row justify-between items-center">
-              <div className="w-full md:w-1/2 mb-4 md:mb-0">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaSearch className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                      className="block w-full pl-10 pr-3 py-2 rounded-lg leading-5 bg-white/80 dark:bg-gray-800/60 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm border border-white/30 dark:border-gray-700/40 glass"
-                    placeholder="Search contracts..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-4xl font-serif mb-1">{stats.totalContracts}</p>
+                  <p className="text-xs text-white/40">Total Audits Performed</p>
                 </div>
+                <ArrowUpRight className="w-5 h-5 text-white/20 group-hover:text-white transition-colors" />
               </div>
-              
-              <div className="flex space-x-2">
-                <button
-                  onClick={toggleFilter} // Toggle filter status
-                    className="btn-secondary"
+            </motion.div>
+
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="spellbook-glass p-8 rounded-[32px] relative overflow-hidden group border-red-500/10"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <div className="p-3 rounded-2xl bg-red-500/5 border border-red-500/10">
+                  <AlertTriangle className="w-6 h-6 text-red-400" />
+                </div>
+                <span className="text-[10px] uppercase tracking-widest text-red-400/40 font-bold">Critical Insights</span>
+              </div>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-4xl font-serif mb-1 text-red-200">{stats.alertsFound}</p>
+                  <p className="text-xs text-white/40">Active Risk Notifications</p>
+                </div>
+                <ArrowUpRight className="w-5 h-5 text-white/20 group-hover:text-white transition-colors" />
+              </div>
+            </motion.div>
+
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="spellbook-glass p-8 rounded-[32px] relative overflow-hidden group"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <Clock className="w-6 h-6 text-white/60" />
+                </div>
+                <span className="text-[10px] uppercase tracking-widest text-white/20 font-bold">Queue Status</span>
+              </div>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-4xl font-serif mb-1">{stats.pendingContracts}</p>
+                  <p className="text-xs text-white/40">In-Progress Extractions</p>
+                </div>
+                <ArrowUpRight className="w-5 h-5 text-white/20 group-hover:text-white transition-colors" />
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Activity List */}
+          <section>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-serif">Audit Records</h2>
+              <div className="flex items-center gap-2 p-1 bg-white/5 rounded-lg border border-white/10">
+                <button 
+                  onClick={() => setFilterStatus('')}
+                  className={`px-3 py-1 rounded-md text-[10px] uppercase tracking-widest font-bold transition-all ${filterStatus === '' ? 'bg-white text-brand-background shadow-glow' : 'hover:bg-white/5 text-white/40'}`}
                 >
-                  <FaFilter className="mr-2" /> {filterStatus === 'Processing' ? 'Show Completed' : filterStatus === 'Completed' ? 'Show All' : 'Show Processing'}
+                  All
                 </button>
-                
-                <Link
-                  to="/upload"
-                    className="btn-primary"
+                <button 
+                  onClick={() => setFilterStatus('Verified')}
+                  className={`px-3 py-1 rounded-md text-[10px] uppercase tracking-widest font-bold transition-all ${filterStatus === 'Verified' ? 'bg-white text-brand-background shadow-glow' : 'hover:bg-white/5 text-white/40'}`}
                 >
-                  <FaFileUpload className="mr-2" /> Upload New Contract
-                </Link>
+                  Verified
+                </button>
               </div>
             </div>
 
-            {/* Recent Contracts */}
-            <div className="mt-8">
-              <h2 className="text-lg font-medium text-gray-900">Recent Contracts</h2>
-              
-              {filteredContracts.length === 0 ? (
-                <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-md p-6 text-center text-gray-500">
-                  No contracts found. Upload your first contract!
+            {filteredContracts.length === 0 ? (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="spellbook-glass p-20 rounded-[32px] text-center"
+              >
+                <div className="w-16 h-16 bg-white/5 border border-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <FileText className="w-8 h-8 text-white/20" />
                 </div>
-              ) : (
-                <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <p className="text-white/40 text-sm mb-8 italic">Your intelligence repository is currently empty.</p>
+                <Link to="/upload" className="spellbook-btn-secondary inline-flex">
+                  Begin First Audit
+                </Link>
+              </motion.div>
+            ) : (
+              <div className="grid gap-4">
+                <AnimatePresence mode="popLayout">
                   {filteredContracts.map((contract) => (
-                    <div key={contract.id} className="glass overflow-hidden rounded-2xl">
-                      <div className="p-5">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0">
-                            <img 
-                              src={contract.thumbnail} 
-                              alt={contract.title} 
-                              className="h-32 w-24 object-cover rounded-lg border border-white/30 dark:border-gray-700/40" 
-                            />
+                    <motion.div
+                      key={contract.id}
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="spellbook-glass p-2 rounded-3xl group relative overflow-hidden"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center gap-6 p-4">
+                        <div className="w-24 h-32 rounded-2xl bg-white/5 border border-white/10 overflow-hidden shrink-0 group-hover:border-white/30 transition-all duration-500">
+                          {contract.thumbnail ? (
+                            <img src={contract.thumbnail} alt="doc" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-brand-muted/20">
+                              <FileText className="w-8 h-8 text-white/20" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-xl font-serif truncate">{contract.title}</h3>
+                            <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] uppercase tracking-widest font-bold text-white/40">
+                              ID: {contract.id.slice(-6)}
+                            </span>
                           </div>
-                          <div className="ml-5">
-                            <h3 className="text-lg font-medium">{contract.title}</h3>
-                            <p className="text-sm text-gray-500">Uploaded: {contract.uploadDate}</p>
-                            <div className="mt-2">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                contract.status === 'Processing' 
-                                  ? 'bg-yellow-100 text-yellow-800' 
-                                  : 'bg-green-100 text-green-800'
-                              }`}>
-                                {contract.status}
-                              </span>
-                              
-                              {contract.alertsCount > 0 && (
-                                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                  {contract.alertsCount} Alerts
-                                </span>
+                          <p className="text-sm text-white/30 truncate mb-4">
+                            {contract.summary}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-6 text-[10px] uppercase tracking-widest font-bold">
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-3 h-3 text-white/30" />
+                              <span className="text-white/40">{contract.uploadDate}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {contract.alertsCount > 0 ? (
+                                <>
+                                  <AlertTriangle className="w-3 h-3 text-red-400" />
+                                  <span className="text-red-400/80">{contract.alertsCount} Risks Detected</span>
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="w-3 h-3 text-emerald-400" />
+                                  <span className="text-emerald-400/80">Zero Risks Found</span>
+                                </>
                               )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                              <span className="text-blue-400/80">{contract.status}</span>
                             </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="px-5 py-3">
+
                         <Link
-                          to={`/analysis-summary/${contract.id}`} // Updated path to match AnalysisSummary route
-                          className="text-sm font-medium text-primary-600 hover:text-primary-500"
+                          to={`/analysis/${contract.realIndex}`}
+                          className="spellbook-btn-secondary py-3 px-8 text-xs group/btn"
                         >
-                          View Summary <span aria-hidden="true">&rarr;</span>
+                          View Report
+                          <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                         </Link>
                       </div>
-                    </div>
+                      
+                      {/* Hover Aura */}
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/[0.02] blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-white/[0.05] transition-all" />
+                    </motion.div>
                   ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </main>
-      </div>
+                </AnimatePresence>
+              </div>
+            )}
+          </section>
+        </div>
+      </main>
+
+      {/* Background Decor */}
+      <div className="fixed top-1/2 left-0 w-[500px] h-[500px] aura-glow opacity-5 -translate-x-1/2" />
+      <div className="fixed bottom-0 right-0 w-[600px] h-[600px] aura-glow opacity-5 lg:opacity-10 translate-x-1/4 translate-y-1/4" />
     </div>
   );
 };

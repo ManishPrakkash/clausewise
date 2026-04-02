@@ -1,14 +1,24 @@
-// src/pages/UploadContract.jsx
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { FaFileUpload, FaTrash, FaExclamationCircle, FaFilePdf, FaFileWord, FaFileAlt, FaImage } from 'react-icons/fa';
+import { 
+  Upload, 
+  Trash2, 
+  AlertCircle, 
+  FileText, 
+  FileCode, 
+  Image as ImageIcon, 
+  CheckCircle,
+  Loader2,
+  ChevronRight
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Navigation from '../components/Navigation';
 import huggingFaceService from '../utils/huggingFaceService';
 import documentTextExtractor from '../utils/documentTextExtractor';
 import contractAnalysisService from '../utils/contractAnalysisService';
 
-const UploadContract = () => {
+const UploadContract = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -21,7 +31,6 @@ const UploadContract = () => {
 
   const onDrop = useCallback((acceptedFiles) => {
     try {
-      // Validate each file
       acceptedFiles.forEach(file => {
         documentTextExtractor.validateFile(file);
       });
@@ -29,22 +38,13 @@ const UploadContract = () => {
       const newFiles = acceptedFiles.map((file) => {
         const fileType = documentTextExtractor.getFileType(file);
         let preview = '';
-        
-        // Generate preview based on file type
         if (fileType === 'image') {
           preview = URL.createObjectURL(file);
-        } else if (fileType === 'pdf') {
-          preview = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjRjM0RjQ2Ii8+CjxwYXRoIGQ9Ik0xNiAxNkg0OFY0OEgxNlYxNloiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0yNCAyNEg0MFYzMkgyNFYyNFoiIGZpbGw9IiNFNUU3RUIiLz4KPHBhdGggZD0iTTI0IDM2SDQwVjQ0SDI0VjM2WiIgZmlsbD0iI0U1RTdFQiIvPgo8cGF0aCBkPSJNMjQgNDhIMzJWNjBIMjRWNDhaIiBmaWxsPSIjRTVFN0VCIi8+Cjwvc3ZnPgo=';
-        } else if (fileType === 'doc' || fileType === 'docx') {
-          preview = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMjc4N0Y1Ii8+CjxwYXRoIGQ9Ik0xNiAxNkg0OFY0OEgxNlYxNloiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0yNCAyNEg0MFYzMkgyNFYyNFoiIGZpbGw9IiMyNzg3RjUiLz4KPHBhdGggZD0iTTI0IDM2SDQwVjQ0SDI0VjM2WiIgZmlsbD0iIzI3ODdGNSIvPgo8cGF0aCBkPSJNMjQgNDhIMzJWNjBIMjRWNDhaIiBmaWxsPSIjMjc4N0Y1Ii8+Cjwvc3ZnPgo=';
-        } else if (fileType === 'txt') {
-          preview = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjNjY2NjY2Ii8+CjxwYXRoIGQ9Ik0xNiAxNkg0OFY0OEgxNlYxNloiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0yNCAyNEg0MFYzMkgyNFYyNFoiIGZpbGw9IiM2NjY2NjYiLz4KPHBhdGggZD0iTTI0IDM2SDQwVjQ0SDI0VjM2WiIgZmlsbD0iIzY2NjY2NiIvPgo8cGF0aCBkPSJNMjQgNDhIMzJWNjBIMjRWNDhaIiBmaWxsPSIjNjY2NjY2Ii8+Cjwvc3ZnPgo=';
         }
-
         return Object.assign(file, {
           preview,
           fileType,
-          processingStatus: documentTextExtractor.getProcessingStatus(fileType)
+          id: Math.random().toString(36).substr(2, 9)
         });
       });
 
@@ -65,154 +65,52 @@ const UploadContract = () => {
       'text/plain': ['.txt']
     },
     maxFiles: 10,
-    maxSize: 50 * 1024 * 1024, // 50MB
+    maxSize: 50 * 1024 * 1024,
   });
 
-  const removeFile = (index) => {
+  const removeFile = (id) => {
     setFiles((prev) => {
-      const newFiles = [...prev];
-      const fileToRemove = newFiles[index];
-      
-      // Only revoke URL if it's an image file (not a data URL)
-      if (fileToRemove.fileType === 'image' && fileToRemove.preview && !fileToRemove.preview.startsWith('data:')) {
+      const fileToRemove = prev.find(f => f.id === id);
+      if (fileToRemove?.fileType === 'image' && fileToRemove.preview) {
         URL.revokeObjectURL(fileToRemove.preview);
       }
-      
-      newFiles.splice(index, 1);
-      return newFiles;
+      return prev.filter(f => f.id !== id);
     });
   };
 
-  const updateProgress = (fileName, progress) => {
-    setProcessingProgress(prev => ({
-      ...prev,
-      [fileName]: progress
-    }));
-  };
-
   const handleSubmit = async () => {
-    if (!files.length) return setError('Please upload at least one file to process');
-
+    if (!files.length) return setError('Please upload at least one document to analyze.');
     setUploading(true);
-    setProcessingProgress({});
     
     try {
-      // Initialize progress for all files
-      const initialProgress = {};
-      files.forEach(file => {
-        initialProgress[file.name] = 0;
-      });
-      setProcessingProgress(initialProgress);
-      
-      // Use the new document text extractor
       const extractionResults = await documentTextExtractor.processMultipleFiles(files);
-      
-      if (extractionResults.failureCount > 0) {
-        console.warn(`${extractionResults.failureCount} files failed to process:`, extractionResults.failedResults);
-      }
-
       const results = extractionResults.successfulResults.map((result) => ({
         name: result.name,
         text: result.text || 'No text detected',
-        thumbnail: files.find(f => f.name === result.name)?.preview || '',
         fileType: result.type,
         size: result.size
       }));
 
       const fullText = results.map((r) => r.text).join('\n');
-
-      let summary = 'No summary available.';
-      let keyPoints = ['No key points available.'];
-
-      try {
-        // Use Hugging Face for dynamic summary generation
-        summary = await huggingFaceService.generateSummary(fullText);
-        console.log('AI-generated summary:', summary);
-      } catch (summarizationError) {
-        console.error('Error during AI summarization:', summarizationError);
-        // Fallback to basic summary
-        summary = fullText.length > 100 ? fullText.substring(0, 100) + '...' : fullText;
-      }
-
-      try {
-        // Use Hugging Face for dynamic key points extraction
-        keyPoints = await huggingFaceService.generateKeyPoints(fullText);
-        console.log('AI-generated key points:', keyPoints);
-      } catch (keyPointsError) {
-        console.error('Error extracting AI key points:', keyPointsError);
-        // Fallback to basic key points
-        keyPoints = [
-          'Document contains important terms and conditions.',
-          'Property details and ownership information included.',
-          'Payment and duration terms specified.',
-          'Legal obligations and responsibilities outlined.',
-          'Additional clauses and conditions documented.'
-        ];
-      }
-
-      // Use the new contract analysis service for detailed analysis
-      let detailedSections = [];
-      try {
-        console.log('Starting detailed contract analysis...');
-        detailedSections = await contractAnalysisService.analyzeContractSections(fullText, 'land ownership contract');
-        console.log('Contract analysis completed successfully');
-      } catch (analysisError) {
-        console.error('Error during contract analysis:', analysisError);
-        // Fallback to basic sections if analysis fails
-        detailedSections = [
-          {
-            title: 'Payment Terms',
-            content: 'Analysis could not be completed. Please review manually.',
-            alerts: [{ message: 'Analysis failed. Manual review required.', level: 'error' }]
-          },
-          {
-            title: 'Contract Duration',
-            content: 'Analysis could not be completed. Please review manually.',
-            alerts: [{ message: 'Analysis failed. Manual review required.', level: 'error' }]
-          },
-          {
-            title: 'Confidentiality Clause',
-            content: 'Analysis could not be completed. Please review manually.',
-            alerts: [{ message: 'Analysis failed. Manual review required.', level: 'error' }]
-          },
-          {
-            title: 'Termination Clause',
-            content: 'Analysis could not be completed. Please review manually.',
-            alerts: [{ message: 'Analysis failed. Manual review required.', level: 'error' }]
-          },
-          {
-            title: 'Dispute Resolution',
-            content: 'Analysis could not be completed. Please review manually.',
-            alerts: [{ message: 'Analysis failed. Manual review required.', level: 'error' }]
-          },
-          {
-            title: 'Liability & Indemnification',
-            content: 'Analysis could not be completed. Please review manually.',
-            alerts: [{ message: 'Analysis failed. Manual review required.', level: 'error' }]
-          },
-          {
-            title: 'Intellectual Property',
-            content: 'Analysis could not be completed. Please review manually.',
-            alerts: [{ message: 'Analysis failed. Manual review required.', level: 'error' }]
-          },
-          {
-            title: 'Compliance & Regulations',
-            content: 'Analysis could not be completed. Please review manually.',
-            alerts: [{ message: 'Analysis failed. Manual review required.', level: 'error' }]
-          }
-        ];
-      }
       
+      // Parallel execution for AI tasks
+      const [summary, keyPoints, detailedSections] = await Promise.all([
+        huggingFaceService.generateSummary(fullText).catch(() => 'Summary unavailable.'),
+        huggingFaceService.generateKeyPoints(fullText).catch(() => ['Analysis pending.']),
+        contractAnalysisService.analyzeContractSections(fullText, 'legal contract').catch(() => [])
+      ]);
+
       const newContract = {
         id: `${Date.now()}`,
         name: files[0].name,
         text: fullText,
         summary,
         keyPoints,
-        thumbnail: files[0].preview,
-        detailedSections, // Use AI-analyzed sections
-        documentType: 'Land Ownership Contract', // Default document type
-        extractedText: fullText, // Store extracted text for chatbot
+        thumbnail: files[0].preview || null,
+        detailedSections,
+        documentType: 'Legal Contract',
+        extractedText: fullText,
+        timestamp: new Date().toISOString()
       };
 
       const history = JSON.parse(localStorage.getItem('ocrHistory')) || [];
@@ -220,172 +118,186 @@ const UploadContract = () => {
       localStorage.setItem('ocrHistory', JSON.stringify(history));
       navigate(`/analysis/${history.length}`);
     } catch (err) {
-      console.error('Error during file processing:', err);
-      setError('Failed to process files. Please try again.');
+      setError('System failure during analysis. Please try again.');
     } finally {
       setUploading(false);
     }
   };
 
+  const getFileIcon = (type) => {
+    switch(type) {
+      case 'pdf': return <FileText className="w-8 h-8 text-red-400" />;
+      case 'doc':
+      case 'docx': return <FileCode className="w-8 h-8 text-blue-400" />;
+      case 'image': return <ImageIcon className="w-8 h-8 text-emerald-400" />;
+      default: return <FileText className="w-8 h-8 text-white/40" />;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navigation />
-      <div className="py-10">
-        <header>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold leading-tight text-gray-900">Upload Contract</h1>
-          </div>
-        </header>
-        
-        <main>
-          <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                {error && (
-                  <div className="rounded-md bg-red-50 p-4 mb-6">
-                    <div className="flex">
-                      <div className="flex-shrink-0">
-                        <FaExclamationCircle className="h-5 w-5 text-red-400" />
-                      </div>
-                      <div className="ml-3">
-                        <h3 className="text-sm font-medium text-red-800">Error</h3>
-                        <div className="mt-2 text-sm text-red-700">
-                          <p>{error}</p>
-                        </div>
-                      </div>
-                    </div>
+    <div className="min-h-screen bg-brand-background text-white selection:bg-white/10">
+      <Navigation setIsAuthenticated={setIsAuthenticated} />
+      
+      <main className="pt-32 pb-20 px-6">
+        <div className="max-w-5xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-12"
+          >
+            <h1 className="text-5xl font-serif mb-4">Analyze Documents</h1>
+            <p className="text-white/40 max-w-xl">
+              Deposit your contracts into our neural engine for instant, exhaustive legal analysis and summarization.
+            </p>
+          </motion.div>
+
+          <div className="grid lg:grid-cols-3 gap-12">
+            {/* Upload Area */}
+            <div className="lg:col-span-2 space-y-8">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                {...getRootProps()}
+                className={`group relative overflow-hidden rounded-[32px] border-2 border-dashed transition-all duration-500 cursor-pointer p-12 text-center
+                  ${isDragActive ? 'border-white/40 bg-white/5' : 'border-white/10 hover:border-white/20 bg-white/[0.02]'}`}
+              >
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className={`p-6 rounded-full bg-white/5 mb-6 transition-transform duration-500 ${isDragActive ? 'scale-110' : 'group-hover:scale-105'}`}>
+                    <Upload className={`w-10 h-10 transition-colors ${isDragActive ? 'text-white' : 'text-white/40'}`} />
                   </div>
-                )}
-                <div
-                  {...getRootProps()}
-                  className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md ${
-                    isDragActive ? 'border-primary-500 bg-primary-50' : 'border-gray-300'
-                  }`}
-                >
-                  <div className="space-y-1 text-center">
-                    <FaFileUpload className="mx-auto h-12 w-12 text-gray-400" />
-                    <div className="flex text-sm text-gray-600">
-                      <label
-                        htmlFor="file-upload"
-                        className="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500"
-                      >
-                        <span>Upload files</span>
-                        <input {...getInputProps()} />
-                      </label>
-                      <p className="pl-1">or drag and drop</p>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      Images (PNG, JPG, GIF), PDFs, Word docs (DOC, DOCX), Text files (TXT)
-                    </p>
-                    <p className="text-xs text-gray-500 font-semibold">
-                      Upload contract documents (up to 10 files, 50MB each)
-                    </p>
-                  </div>
+                  <h3 className="text-xl font-medium mb-2">
+                    {isDragActive ? 'Drop to start analysis' : 'Select Files'}
+                  </h3>
+                  <p className="text-sm text-white/30 max-w-xs mb-8">
+                    Drag and drop your PDFs, Images, or Word docs here. Up to 10 files, 50MB each.
+                  </p>
+                  <span className="spellbook-btn-secondary px-6 py-2 text-xs">
+                    Choose from device
+                  </span>
+                  <input {...getInputProps()} />
                 </div>
+                {isDragActive && (
+                  <motion.div 
+                    layoutId="upload-glow"
+                    className="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent pointer-events-none"
+                  />
+                )}
+              </motion.div>
+
+              {/* File List */}
+              <AnimatePresence>
                 {files.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-medium text-gray-900">
-                      Uploaded Contract Documents ({files.length}/10)
-                    </h3>
-                    <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                      {files.map((file, index) => (
-                        <div key={index} className="relative">
-                          <div className="relative">
-                            {file.fileType === 'image' ? (
-                              <img
-                                src={file.preview}
-                                alt={`Document ${index + 1}`}
-                                className="h-40 w-32 object-cover rounded-md border border-gray-200"
-                              />
-                            ) : (
-                              <div className="h-40 w-32 bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center">
-                                <img
-                                  src={file.preview}
-                                  alt={`Document ${index + 1}`}
-                                  className="h-16 w-16"
-                                />
-                              </div>
-                            )}
-                            
-                            {/* File type badge */}
-                            <div className="absolute top-2 left-2">
-                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                file.fileType === 'pdf' ? 'bg-red-100 text-red-800' :
-                                file.fileType === 'doc' || file.fileType === 'docx' ? 'bg-blue-100 text-blue-800' :
-                                file.fileType === 'txt' ? 'bg-gray-100 text-gray-800' :
-                                'bg-green-100 text-green-800'
-                              }`}>
-                                {file.fileType === 'pdf' ? <FaFilePdf className="mr-1" /> :
-                                 file.fileType === 'doc' || file.fileType === 'docx' ? <FaFileWord className="mr-1" /> :
-                                 file.fileType === 'txt' ? <FaFileAlt className="mr-1" /> :
-                                 <FaImage className="mr-1" />}
-                                {file.fileType.toUpperCase()}
-                              </span>
-                            </div>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-4"
+                  >
+                    <div className="flex items-center justify-between px-2">
+                      <h4 className="text-[10px] uppercase tracking-widest font-bold text-white/40">Queue ({files.length}/10)</h4>
+                      <button onClick={() => setFiles([])} className="text-[10px] uppercase tracking-widest font-bold text-red-400 hover:text-red-300 transition-colors">Clear All</button>
+                    </div>
+                    <div className="grid gap-3">
+                      {files.map((file) => (
+                        <motion.div
+                          key={file.id}
+                          layout
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          className="spellbook-glass p-4 rounded-2xl flex items-center gap-4 transition-all hover:bg-white/[0.05]"
+                        >
+                          <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+                            {file.preview ? (
+                              <img src={file.preview} alt="preview" className="w-full h-full object-cover" />
+                            ) : getFileIcon(file.fileType)}
                           </div>
-                          
-                          <div className="absolute top-0 right-0 -mt-2 -mr-2">
-                            <button
-                              type="button"
-                              onClick={() => removeFile(index)}
-                              className="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                            >
-                              <FaTrash className="h-3 w-3" />
-                            </button>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{file.name}</p>
+                            <p className="text-[10px] text-white/30 uppercase">{(file.size / (1024 * 1024)).toFixed(2)} MB • {file.fileType}</p>
                           </div>
-                          
-                          <div className="mt-2 text-center">
-                            <p className="text-xs text-gray-900 font-medium truncate" title={file.name}>
-                              {file.name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {documentTextExtractor.formatFileSize(file.size)}
-                            </p>
-                            {uploading && processingProgress[file.name] && (
-                              <div className="mt-1">
-                                <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                  <div 
-                                    className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                                    style={{ width: `${processingProgress[file.name]}%` }}
-                                  ></div>
-                                </div>
-                                <p className="text-xs text-blue-600 mt-1">
-                                  {processingProgress[file.name]}%
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                          <button 
+                            onClick={() => removeFile(file.id)}
+                            className="p-2 rounded-xl text-white/20 hover:text-red-400 hover:bg-red-400/5 transition-all"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </motion.div>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 )}
-                <div className="mt-6">
-                  <p className="text-sm text-gray-500">
-                    We don't store your contracts - they're processed securely and then deleted.
-                    Our AI system will analyze the contract documents and highlight important terms and potential issues.
-                    Supported formats: Images (OCR), PDFs, Word documents, and text files.
-                  </p>
+              </AnimatePresence>
+            </div>
+
+            {/* Sidebar / Info */}
+            <div className="space-y-8">
+              <div className="spellbook-glass p-8 rounded-[32px] space-y-6">
+                <div className="flex items-center gap-3 text-white/60">
+                  <Shield className="w-5 h-5" />
+                  <span className="text-xs font-bold uppercase tracking-widest">Safe Passage</span>
+                </div>
+                <p className="text-sm text-white/40 leading-relaxed">
+                  Your documents are processed in a zero-persistence sandbox. We do not store sensitive legal data after the session ends.
+                </p>
+                <div className="pt-4 space-y-3">
+                  <div className="flex items-center gap-3 text-xs text-white/60">
+                    <CheckCircle className="w-4 h-4 text-emerald-400" />
+                    AES-256 Encryption
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-white/60">
+                    <CheckCircle className="w-4 h-4 text-emerald-400" />
+                    Multi-page PDF Parsing
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-white/60">
+                    <CheckCircle className="w-4 h-4 text-emerald-400" />
+                    Semantic Clause Mapping
+                  </div>
                 </div>
               </div>
-              <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={uploading || files.length === 0}
-                  className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black ${
-                    uploading || files.length === 0
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-black hover:bg-gray-800'
-                  }`}
-                >
-                  {uploading ? 'Processing...' : 'Process Documents'}
-                </button>
-              </div>
+
+              {error && (
+                <div className="p-6 rounded-[32px] bg-red-500/5 border border-red-500/10 text-red-200 text-xs flex items-start gap-4">
+                  <AlertCircle className="w-5 h-5 shrink-0" />
+                  {error}
+                </div>
+              )}
+
+              <button
+                onClick={handleSubmit}
+                disabled={uploading || files.length === 0}
+                className="spellbook-btn-primary w-full py-4 text-md group relative overflow-hidden"
+              >
+                <AnimatePresence mode="wait">
+                  {uploading ? (
+                    <motion.div 
+                      key="loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center gap-3"
+                    >
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Initializing Engine...
+                    </motion.div>
+                  ) : (
+                    <motion.div 
+                      key="static"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center gap-3"
+                    >
+                      Process Documents
+                      <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </button>
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

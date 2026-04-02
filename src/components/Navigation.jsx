@@ -1,176 +1,175 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaHistory, FaCog, FaSignOutAlt, FaUser, FaBell, FaMoon, FaSun, FaMapMarkedAlt, FaFileUpload } from 'react-icons/fa';
+import { 
+  Home, 
+  History, 
+  Settings, 
+  LogOut, 
+  User, 
+  Bell, 
+  Upload, 
+  Map, 
+  Shield,
+  Menu,
+  X
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Navigation = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark';
-  });
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const root = document.documentElement;
-    if (isDarkMode) {
-      root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      root.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDarkMode]);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setIsAuthenticated(false);
-    setIsProfileOpen(false);
-    navigate('/login', { replace: true });
+    navigate('/landing', { replace: true });
   };
 
-  const user = JSON.parse(localStorage.getItem('user') || '{"name": "User", "email": "user@example.com"}');
+  const user = JSON.parse(localStorage.getItem('user') || '{"name": "Explorer", "email": "user@clausewise.ai"}');
+
+  const navLinks = [
+    { name: 'Dashboard', path: '/dashboard', icon: Home },
+    { name: 'Upload', path: '/upload', icon: Upload },
+    { name: 'Verification', path: '/land-verification', icon: Map },
+    { name: 'History', path: '/history', icon: History },
+  ];
 
   return (
-    <nav className="sticky top-0 z-40 glass">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-primary-600 to-blue-500" />
-            <Link to="/dashboard" className="text-xl font-bold tracking-tight">
-              ClauseWise
-            </Link>
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-6 ${scrolled ? 'py-4' : 'py-6'}`}>
+      <nav className={`max-w-7xl mx-auto spellbook-glass rounded-full px-6 py-2 flex items-center justify-between transition-all duration-500 ${scrolled ? 'bg-brand-background/80' : ''}`}>
+        {/* Logo */}
+        <Link to="/dashboard" className="flex items-center gap-2 group">
+          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center transition-transform group-hover:scale-110">
+            <Shield className="w-5 h-5 text-brand-background" />
           </div>
+          <span className="font-serif text-xl tracking-tighter text-white">ClauseWise</span>
+        </Link>
 
-          {/* Navigation Links */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-1">
+        {/* Desktop Links */}
+        <div className="hidden md:flex items-center gap-1">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            const isActive = location.pathname === link.path;
+            return (
               <Link
-                to="/dashboard"
-                className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
-                  location.pathname === '/dashboard'
-                    ? 'text-primary-700 dark:text-primary-300 bg-primary-50/70 dark:bg-primary-900/40'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                key={link.path}
+                to={link.path}
+                className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                  isActive ? 'text-white' : 'text-white/40 hover:text-white/70'
                 }`}
               >
-                <FaHome />
-                Dashboard
+                {isActive && (
+                  <motion.div
+                    layoutId="nav-active"
+                    className="absolute inset-0 bg-white/5 rounded-full border border-white/10"
+                    transition={{ type: 'spring', duration: 0.6 }}
+                  />
+                )}
+                <Icon className="w-4 h-4" />
+                {link.name}
               </Link>
-              
-              <Link
-                to="/upload"
-                className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
-                  location.pathname === '/upload'
-                    ? 'text-primary-700 dark:text-primary-300 bg-primary-50/70 dark:bg-primary-900/40'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                <FaFileUpload />
-                Upload Contract
-              </Link>
-              
-              <Link
-                to="/land-verification"
-                className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
-                  location.pathname === '/land-verification'
-                    ? 'text-primary-700 dark:text-primary-300 bg-primary-50/70 dark:bg-primary-900/40'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                <FaMapMarkedAlt />
-                Land Verification
-              </Link>
-              
-              <Link
-                to="/history"
-                className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
-                  location.pathname === '/history'
-                    ? 'text-primary-700 dark:text-primary-300 bg-primary-50/70 dark:bg-primary-900/40'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                <FaHistory />
-                History
-              </Link>
-              
-              <Link
-                to="/settings"
-                className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
-                  location.pathname === '/settings'
-                    ? 'text-primary-700 dark:text-primary-300 bg-primary-50/70 dark:bg-primary-900/40'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                <FaCog />
-                Settings
-              </Link>
-            </div>
-          </div>
+            );
+          })}
+        </div>
 
-          {/* Right side items */}
-          <div className="flex items-center space-x-2">
-            {/* Notifications */}
+        {/* Action Area */}
+        <div className="flex items-center gap-4">
+          <button className="hidden sm:flex p-2 rounded-full text-white/40 hover:text-white hover:bg-white/5 transition-all">
+            <Bell className="w-4 h-4" />
+          </button>
+          
+          <div className="relative">
             <button
-              className="p-2 rounded-full text-gray-600 hover:text-gray-900 dark:text-gray-300 hover:bg-gray-700/40"
-              title="View notifications"
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="flex items-center gap-2 p-1 pr-3 rounded-full hover:bg-white/5 transition-all border border-transparent hover:border-white/10"
             >
-              <FaBell size={16} />
+              <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-xs font-bold">
+                {user.name.charAt(0)}
+              </div>
+              <span className="hidden lg:block text-xs font-medium text-white/60">{user.name}</span>
             </button>
 
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2 rounded-full text-gray-600 hover:text-gray-900 dark:text-gray-300 hover:bg-gray-700/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-              title="Toggle theme"
-            >
-              {isDarkMode ? <FaSun size={16} /> : <FaMoon size={16} />}
-            </button>
-
-            {/* Profile dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
-                aria-expanded="false"
-                aria-haspopup="true"
-              >
-                <span className="sr-only">Open user menu</span>
-                <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-primary-600 to-blue-500 flex items-center justify-center text-white font-medium shadow-sm">
-                  {user.name.charAt(0)}
-                </div>
-              </button>
-
+            <AnimatePresence>
               {isProfileOpen && (
-                <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
-                  <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600">
-                    <div className="font-medium">{user.name}</div>
-                    <div className="text-gray-500 dark:text-gray-400">{user.email}</div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute right-0 mt-4 w-56 spellbook-glass rounded-2xl p-2 overflow-hidden"
+                >
+                  <div className="px-4 py-3 mb-2 border-b border-white/5">
+                    <p className="text-xs font-bold text-white">{user.name}</p>
+                    <p className="text-[10px] text-white/40 truncate">{user.email}</p>
                   </div>
-                  
                   <Link
                     to="/settings"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                    className="flex items-center gap-3 px-4 py-2 text-xs text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all"
                     onClick={() => setIsProfileOpen(false)}
                   >
-                    <FaUser className="mr-2" />
-                    Your Profile
+                    <Settings className="w-4 h-4" />
+                    System Settings
                   </Link>
-                  
                   <button
                     onClick={handleLogout}
-                    className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                    className="w-full flex items-center gap-3 px-4 py-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/5 rounded-xl transition-all"
                   >
-                    <FaSignOutAlt className="mr-2" />
-                    Sign out
+                    <LogOut className="w-4 h-4" />
+                    Terminate Session
                   </button>
-                </div>
+                </motion.div>
               )}
-            </div>
+            </AnimatePresence>
           </div>
+
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="md:hidden p-2 text-white/40 hover:text-white"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X /> : <Menu />}
+          </button>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden mt-4 spellbook-glass rounded-3xl overflow-hidden px-4 py-6"
+          >
+            <div className="flex flex-col gap-2">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-4 px-6 py-4 rounded-2xl hover:bg-white/5 text-white/60 hover:text-white transition-all"
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="font-serif text-lg">{link.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
   );
 };
 

@@ -1,6 +1,17 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaCheck, FaTimes, FaShieldAlt, FaFileContract, FaUserShield, FaLock } from 'react-icons/fa';
+import { useNavigate, Link } from 'react-router-dom';
+import { 
+  ShieldCheck, 
+  FileText, 
+  Lock, 
+  Check, 
+  X, 
+  ArrowLeft,
+  ChevronRight,
+  Scale,
+  FileSearch
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 import { acceptTerms } from '../utils/termsManager';
 
 const TermsAndConditions = ({ onAccept, onDecline }) => {
@@ -11,7 +22,6 @@ const TermsAndConditions = ({ onAccept, onDecline }) => {
     if (hasRead) {
       acceptTerms();
       onAccept && onAccept();
-      // Set the terms as accepted in localStorage so user doesn't need to check again
       localStorage.setItem('termsAccepted', 'true');
       localStorage.setItem('termsAcceptedDate', new Date().toISOString());
       navigate('/login');
@@ -20,191 +30,112 @@ const TermsAndConditions = ({ onAccept, onDecline }) => {
 
   const handleDecline = () => {
     onDecline && onDecline();
-    navigate('/login');
+    navigate('/landing');
   };
 
+  const sections = [
+    {
+      title: 'Neural Protocol Acceptance',
+      icon: ShieldCheck,
+      content: 'By accessing ClauseWise, you enter into a binding agreement with our neural analysis engine. This platform is optimized for legal deconstruction and verification within the global regulatory framework.'
+    },
+    {
+      title: 'Service Architecture',
+      icon: FileSearch,
+      content: 'Our systems provide AI-driven contract auditing, territory validation, and semantic clause mapping. These tools are designed for expert assistance and do not constitute formal legal counsel.'
+    },
+    {
+      title: 'Zero-Persistence Data',
+      icon: Lock,
+      content: 'We implement AES-256 encryption. Documents are processed in a volatile memory environment. Once a session terminates, the neural cache is purged to ensure total document privacy.'
+    },
+    {
+      title: 'Legal Limitation',
+      icon: Scale,
+      content: 'ClauseWise is a supportive intelligence layer. All findings should be verified by certified legal entities. We are not liable for autonomous decisions made based on AI-generated summaries.'
+    }
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-4xl text-center">
-        <div className="mx-auto h-16 w-16 rounded-xl bg-gradient-to-tr from-primary-600 to-blue-500 flex items-center justify-center">
-          <FaFileContract className="h-8 w-8 text-white" />
-        </div>
-        <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-gray-900">
-          Terms and Conditions
-        </h1>
-        <p className="mt-2 text-lg text-gray-600">
-          ClauseWise - Legal Document Analysis Platform
-        </p>
-        <p className="mt-1 text-sm text-gray-500">
-          Effective Date: {new Date().toLocaleDateString('en-IN')}
-        </p>
-      </div>
+    <div className="min-h-screen bg-brand-background text-white selection:bg-white/10">
+      <main className="pt-20 pb-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-16 h-16 rounded-[20px] bg-white mx-auto mb-8 flex items-center justify-center"
+            >
+              <FileText className="w-8 h-8 text-brand-background" />
+            </motion.div>
+            <h1 className="text-5xl font-serif mb-4">Neural Statutes</h1>
+            <p className="text-white/40 uppercase tracking-[0.3em] text-[10px] font-bold">Terms & Conditions • v2.4.0</p>
+          </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-4xl">
-        <div className="glass py-8 px-6 rounded-2xl max-h-96 overflow-y-auto">
-          <div className="prose prose-sm max-w-none">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <FaShieldAlt className="mr-2 text-primary-600" />
-                1. Acceptance of Terms
-              </h2>
-              <p className="text-gray-700 mb-4">
-                By accessing and using ClauseWise ("the Platform"), you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions ("Terms"). This Platform is designed for legal document analysis and land verification services in compliance with Indian legal framework.
-              </p>
-            </div>
-
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <FaUserShield className="mr-2 text-primary-600" />
-                2. Service Description
-              </h2>
-              <p className="text-gray-700 mb-4">
-                ClauseWise provides AI-powered legal document analysis, contract review, and land verification services. Our services include but are not limited to:
-              </p>
-              <ul className="list-disc pl-6 text-gray-700 mb-4">
-                <li>Contract analysis and clause identification</li>
-                <li>Legal document text extraction and processing</li>
-                <li>Land verification and property document analysis</li>
-                <li>Risk assessment and compliance checking</li>
-                <li>Document comparison and similarity analysis</li>
-              </ul>
-            </div>
-
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <FaLock className="mr-2 text-primary-600" />
-                3. Data Privacy and Security
-              </h2>
-              <p className="text-gray-700 mb-4">
-                In accordance with the Information Technology Act, 2000 and the Personal Data Protection Bill:
-              </p>
-              <ul className="list-disc pl-6 text-gray-700 mb-4">
-                <li>All uploaded documents are processed securely using encryption</li>
-                <li>Personal data is collected, processed, and stored in compliance with Indian data protection laws</li>
-                <li>Documents are retained only for the duration necessary to provide services</li>
-                <li>Users have the right to access, correct, or delete their personal data</li>
-                <li>We implement appropriate technical and organizational measures to protect data</li>
-              </ul>
-            </div>
-
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">4. User Responsibilities</h2>
-              <p className="text-gray-700 mb-4">You agree to:</p>
-              <ul className="list-disc pl-6 text-gray-700 mb-4">
-                <li>Provide accurate and complete information</li>
-                <li>Ensure you have the legal right to upload and analyze documents</li>
-                <li>Not upload malicious content or violate intellectual property rights</li>
-                <li>Use the platform for lawful purposes only</li>
-                <li>Maintain the confidentiality of your account credentials</li>
-              </ul>
-            </div>
-
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">5. Legal Disclaimer</h2>
-              <p className="text-gray-700 mb-4">
-                <strong>Important:</strong> ClauseWise provides AI-assisted analysis tools and should not be considered as legal advice. Users should:
-              </p>
-              <ul className="list-disc pl-6 text-gray-700 mb-4">
-                <li>Consult qualified legal professionals for legal advice</li>
-                <li>Verify all analysis results independently</li>
-                <li>Not rely solely on automated analysis for critical legal decisions</li>
-                <li>Understand that AI analysis may have limitations and inaccuracies</li>
-              </ul>
-            </div>
-
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">6. Limitation of Liability</h2>
-              <p className="text-gray-700 mb-4">
-                ClauseWise shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from the use of our services. Our total liability shall not exceed the amount paid by you for the services in the preceding 12 months.
-              </p>
-            </div>
-
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">7. Governing Law and Jurisdiction</h2>
-              <p className="text-gray-700 mb-4">
-                These Terms shall be governed by and construed in accordance with the laws of India. Any disputes arising from these Terms shall be subject to the exclusive jurisdiction of the courts in India.
-              </p>
-            </div>
-
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">8. Privacy Policy</h2>
-              <p className="text-gray-700 mb-4">
-                Your privacy is important to us. Please review our{' '}
-                <a href="/privacy" className="text-primary-600 hover:underline font-medium">
-                  Privacy Policy
-                </a>{' '}
-                which explains how we collect, use, and protect your personal information in compliance with Indian data protection laws.
-              </p>
-            </div>
-
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">9. Contact Information</h2>
-              <p className="text-gray-700 mb-4">
-                For questions regarding these Terms, please contact us at:<br />
-                Email: legal@clausewise.com<br />
-                Address: [Your Company Address], India
-              </p>
-            </div>
-
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-              <div className="flex">
-                <div className="ml-3">
-                  <p className="text-sm text-yellow-700">
-                    <strong>Note:</strong> By accepting these terms, you acknowledge that you have read and understood all provisions, including the legal disclaimers and limitations of liability.
-                  </p>
-                </div>
+          {/* Content Scroll */}
+          <div className="spellbook-glass rounded-[40px] p-1 border-white/5 mb-12">
+            <div className="max-h-[500px] overflow-y-auto p-10 space-y-12 scrollbar-premium">
+              {sections.map((section, idx) => {
+                const Icon = section.icon;
+                return (
+                  <div key={idx} className="relative">
+                    <div className="flex items-start gap-6">
+                      <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                        <Icon className="w-5 h-5 text-white/40" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-serif mb-4 text-white/80">{idx + 1}. {section.title}</h3>
+                        <p className="text-sm text-white/40 leading-relaxed font-serif italic">
+                          {section.content}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              <div className="pt-8 border-t border-white/5">
+                <p className="text-[11px] text-white/20 leading-relaxed uppercase tracking-widest font-bold">
+                  Effective Date: {new Date().toLocaleDateString()} • Jurisdiction: Global Digital Framework
+                </p>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="mt-6 flex items-center justify-center">
-          <div className="flex items-start">
-            <div className="flex items-center h-5">
-              <input
-                id="read-terms"
-                name="read-terms"
-                type="checkbox"
-                checked={hasRead}
-                onChange={(e) => setHasRead(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              />
+          {/* Actions */}
+          <div className="space-y-8">
+            <div className="flex items-center justify-center gap-4">
+              <button 
+                onClick={() => setHasRead(!hasRead)}
+                className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${hasRead ? 'bg-white border-white' : 'border-white/10 hover:border-white/30'}`}
+              >
+                {hasRead && <Check className="w-4 h-4 text-brand-background" />}
+              </button>
+              <span className="text-xs text-white/40 font-medium">I acknowledge the neural processing protocols and legal limitations.</span>
             </div>
-            <div className="ml-3 text-sm">
-              <label htmlFor="read-terms" className="text-gray-700">
-                I have read and understood the Terms and Conditions
-              </label>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+              <button
+                onClick={handleDecline}
+                className="text-xs font-bold uppercase tracking-widest text-white/20 hover:text-white transition-colors"
+              >
+                Decline & Exit
+              </button>
+              <button
+                onClick={handleAccept}
+                disabled={!hasRead}
+                className="spellbook-btn-primary py-4 px-12 text-xs group disabled:opacity-20 translate-y-0"
+              >
+                Authorize Access
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
             </div>
           </div>
         </div>
+      </main>
 
-        <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
-          <button
-            type="button"
-            onClick={handleAccept}
-            disabled={!hasRead}
-            className="btn-primary flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <FaCheck className="mr-2" />
-            Accept Terms & Continue
-          </button>
-          
-          <button
-            type="button"
-            onClick={handleDecline}
-            className="btn-secondary flex items-center justify-center"
-          >
-            <FaTimes className="mr-2" />
-            Decline & Exit
-          </button>
-        </div>
-
-        <div className="mt-6 text-center">
-          <p className="text-xs text-gray-500">
-            By accepting these terms, you agree to be bound by all provisions and acknowledge that you have the authority to enter into this agreement.
-          </p>
-        </div>
-      </div>
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] aura-glow opacity-5 pointer-events-none" />
     </div>
   );
 };

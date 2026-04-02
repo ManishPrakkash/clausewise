@@ -1,14 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  User, 
+  Settings as SettingsIcon, 
+  Camera, 
+  Save, 
+  Shield, 
+  Bell, 
+  Lock,
+  ArrowLeft
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 
-const Settings = () => {
+const Settings = ({ setIsAuthenticated }) => {
   const [profileImage, setProfileImage] = useState(
-    localStorage.getItem('profileImage') || './assets/pic.jpg'
+    localStorage.getItem('profileImage') || ''
   );
   const [previewImage, setPreviewImage] = useState(profileImage);
+  const user = JSON.parse(localStorage.getItem('user') || '{"name": "Explorer", "email": "user@clausewise.ai"}');
 
   useEffect(() => {
-    localStorage.setItem('lastVisitedPage', 'settings'); // Store the current page in localStorage
+    localStorage.setItem('lastVisitedPage', 'settings');
   }, []);
 
   const handleImageChange = (e) => {
@@ -21,79 +34,128 @@ const Settings = () => {
 
   const handleSaveImage = () => {
     setProfileImage(previewImage);
-    localStorage.setItem('profileImage', previewImage); // Save the profile image to localStorage
-    alert('Profile picture updated successfully!');
+    localStorage.setItem('profileImage', previewImage);
+    // In a real app, you'd upload this to a server
   };
 
+  const sections = [
+    { name: 'Profile Information', icon: User },
+    { name: 'Security & Neural Access', icon: Lock },
+    { name: 'Notifications', icon: Bell },
+    { name: 'Data & Privacy', icon: Shield },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navigation />
-      <div className="pt-20">
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
-          <div className="bg-gradient-to-r from-black to-gray-500 rounded-t-lg p-6 relative">
-            <h1 className="text-white text-2xl font-bold">Profile</h1>
-            <div className="absolute top-[-40px] right-8 w-20 h-20 bg-white rounded-full overflow-hidden shadow-md">
-              <img
-                src={previewImage}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
+    <div className="min-h-screen bg-brand-background text-white selection:bg-white/10">
+      <Navigation setIsAuthenticated={setIsAuthenticated} />
+      
+      <main className="pt-32 pb-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-12">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
+              <div className="flex items-center gap-3 text-white/40 mb-2">
+                <SettingsIcon className="w-4 h-4" />
+                <span className="text-[10px] uppercase tracking-widest font-bold">System Configuration</span>
+              </div>
+              <h1 className="text-4xl font-serif">Command Settings</h1>
+            </motion.div>
+            
+            <Link to="/dashboard" className="p-3 rounded-full hover:bg-white/5 text-white/20 hover:text-white transition-all">
+              <ArrowLeft className="w-6 h-6" />
+            </Link>
           </div>
-          <div className="p-6">
-            <h2 className="text-xl font-bold mb-4">User Details</h2>
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Name:</span>
-                <span>Raghul</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Date of Birth:</span>
-                <span>2 NOV 2006</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Gender:</span>
-                <span>Male</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">City:</span>
-                <span>Coimbatore</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Contact No.:</span>
-                <span>984123XXXX</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Email:</span>
-                <span>user123@gmail.com</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Password:</span>
-                <span>••••••••</span>
-              </div>
-            </div>
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Update Profile Picture
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-              />
-              <div className="mt-4 flex justify-end">
-                <button
-                  onClick={handleSaveImage}
-                  className="bg-black text-white px-4 py-2 rounded-md shadow hover:bg-gray-800"
-                >
-                  Edit
-                </button>
+
+          <div className="grid lg:grid-cols-4 gap-12">
+            {/* Sidebar Rail */}
+            <aside className="lg:col-span-1 space-y-2">
+              {sections.map((s, i) => {
+                const Icon = s.icon;
+                return (
+                  <button 
+                    key={i}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${i === 0 ? 'bg-white text-brand-background shadow-glow' : 'text-white/40 hover:text-white/60 hover:bg-white/5'}`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {s.name.split(' ')[0]}
+                  </button>
+                );
+              })}
+            </aside>
+
+            {/* Main Content */}
+            <div className="lg:col-span-3 space-y-8">
+              {/* Profile Card */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="spellbook-glass p-10 rounded-[40px] relative overflow-hidden"
+              >
+                <div className="flex flex-col md:flex-row items-center gap-10 mb-12">
+                  <div className="relative group">
+                    <div className="w-32 h-32 rounded-[32px] bg-white/5 border border-white/10 overflow-hidden relative">
+                      {previewImage ? (
+                        <img src={previewImage} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <User className="w-12 h-12 text-white/10" />
+                        </div>
+                      )}
+                      <label className="absolute inset-0 bg-brand-background/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                        <Camera className="w-6 h-6 text-white" />
+                        <input type="file" className="hidden" onChange={handleImageChange} accept="image/*" />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 text-center md:text-left">
+                    <h3 className="text-3xl font-serif mb-2">{user.name}</h3>
+                    <p className="text-sm text-white/40 italic font-serif">ClauseWise Intelligence Explorer</p>
+                  </div>
+
+                  <button 
+                    onClick={handleSaveImage}
+                    className="spellbook-btn-secondary py-3 px-8 text-xs flex items-center gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    Snapshot Profile
+                  </button>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8 pt-8 border-t border-white/5">
+                  {[
+                    { label: 'Neural ID', value: user.email },
+                    { label: 'Operational Hub', value: 'System Default' },
+                    { label: 'Access Tier', value: 'Foundational' },
+                    { label: 'Session Integrity', value: 'AES-256' }
+                  ].map((item, i) => (
+                    <div key={i}>
+                      <span className="text-[10px] uppercase font-bold text-white/20 block mb-1">{item.label}</span>
+                      <p className="text-sm font-medium">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="aura-glow opacity-5 -top-20 -right-20 w-80 h-80" />
+              </motion.div>
+
+              {/* Security Banner */}
+              <div className="p-8 rounded-[32px] bg-emerald-500/5 border border-emerald-500/10 flex items-start gap-6">
+                <Shield className="w-6 h-6 text-emerald-400 mt-1" />
+                <div>
+                  <h4 className="text-sm font-bold uppercase tracking-widest text-emerald-400 mb-2">Security Manifest</h4>
+                  <p className="text-[11px] text-emerald-400/40 leading-relaxed italic">
+                    Your personal data is encrypted using ClauseWise end-to-end protocols. Document analysis happens in a zero-persistence sandbox, ensuring total privacy of your legal archives.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

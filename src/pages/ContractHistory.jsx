@@ -1,32 +1,43 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { 
+  Search, 
+  Filter, 
+  FileText, 
+  Map as MapIcon, 
+  Eye, 
+  Download, 
+  FileStack,
+  History,
+  ArrowRight,
+  ShieldAlert,
+  ShieldCheck
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Navigation from '../components/Navigation';
-import { FaSearch, FaFilter, FaFileAlt, FaMapMarkedAlt, FaEye, FaDownload, FaFilePdf, FaFileAlt as FaFileAltIcon } from 'react-icons/fa';
 import reportGenerator from '../utils/reportGenerator';
 
 const ContractHistory = ({ setIsAuthenticated }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [activeTab, setActiveTab] = useState('contracts'); // 'contracts' or 'land-verification'
+  const [activeTab, setActiveTab] = useState('contracts');
   const [contractHistory, setContractHistory] = useState([]);
   const [landVerificationHistory, setLandVerificationHistory] = useState([]);
 
   useEffect(() => {
     localStorage.setItem('lastVisitedPage', 'history');
 
-    // Load contract history
     const contracts = JSON.parse(localStorage.getItem('ocrHistory')) || [];
     const formattedContracts = contracts.map((item, index) => ({
       id: index + 1,
       title: item.name || 'Untitled Contract',
-      dateScanned: new Date().toLocaleDateString(),
-      status: item.status || 'Completed',
-      alerts: item.alerts || 0,
+      dateScanned: new Date(item.timestamp || Date.now()).toLocaleDateString(),
+      status: item.status || 'Verified',
+      alerts: item.detailedSections?.reduce((acc, s) => acc + (s.alerts?.length || 0), 0) || 0,
       type: 'contract'
     }));
     setContractHistory(formattedContracts.reverse());
 
-    // Load land verification history
     const landResults = JSON.parse(localStorage.getItem('landVerificationResults')) || [];
     const formattedLandResults = landResults.map(result => ({
       id: result.id,
@@ -39,12 +50,9 @@ const ContractHistory = ({ setIsAuthenticated }) => {
       ownershipType: result.ownershipType
     }));
     setLandVerificationHistory(formattedLandResults);
-
   }, []);
 
-  const getCurrentHistory = () => {
-    return activeTab === 'contracts' ? contractHistory : landVerificationHistory;
-  };
+  const getCurrentHistory = () => activeTab === 'contracts' ? contractHistory : landVerificationHistory;
 
   const filteredHistory = getCurrentHistory().filter(doc => {
     const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -52,269 +60,133 @@ const ContractHistory = ({ setIsAuthenticated }) => {
     return matchesSearch && matchesFilter;
   });
 
-  const getStatusBadge = (status, isLegal) => {
-    if (activeTab === 'land-verification') {
-      if (!isLegal) {
-        return <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Issues Found</span>;
-      }
-      return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Verified</span>;
-    }
-    
-    const statusColors = {
-      'Completed': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      'Processing': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-      'Failed': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-    };
-    
-    return (
-      <span className={`px-2 py-1 text-xs rounded-full ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
-        {status}
-      </span>
-    );
-  };
-
-  const downloadReport = (doc, format = 'pdf') => {
-    if (activeTab === 'land-verification') {
-      // Find the full result data
-      const landResults = JSON.parse(localStorage.getItem('landVerificationResults')) || [];
-      const result = landResults.find(r => r.id === doc.id);
-      
-      if (result) {
-        if (format === 'pdf') {
-          const filename = `land_verification_report_${result.documentName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-          reportGenerator.downloadReport(result, filename);
-        } else {
-          // Download JSON report
-          const reportData = {
-            documentName: result.documentName,
-            verificationDate: new Date().toLocaleDateString(),
-            status: result.status,
-            ...result
-          };
-
-          const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `land_verification_report_${result.id}.json`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-        }
-      }
-    }
-  };
-
   return (
-    <>
+    <div className="min-h-screen bg-brand-background text-white selection:bg-white/10">
       <Navigation setIsAuthenticated={setIsAuthenticated} />
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+      
+      <main className="pt-32 pb-20 px-6">
+        <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Document History
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              View and manage your processed documents
-            </p>
-          </div>
-
-          {/* Tab Navigation */}
-          <div className="mb-6">
-            <div className="border-b border-gray-200 dark:border-gray-700">
-              <nav className="-mb-px flex space-x-8">
-                <button
-                  onClick={() => setActiveTab('contracts')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'contracts'
-                      ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
-                >
-                  <FaFileAlt className="inline mr-2" />
-                  Contracts ({contractHistory.length})
-                </button>
-                <button
-                  onClick={() => setActiveTab('land-verification')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'land-verification'
-                      ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
-                >
-                  <FaMapMarkedAlt className="inline mr-2" />
-                  Land Verification ({landVerificationHistory.length})
-                </button>
-              </nav>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-12"
+          >
+            <div className="flex items-center gap-3 text-white/40 mb-4">
+              <History className="w-5 h-5" />
+              <span className="text-[10px] uppercase tracking-[0.3em] font-bold">Archives</span>
             </div>
-          </div>
+            <h1 className="text-5xl font-serif mb-4">Intelligence History</h1>
+            <p className="text-white/40 max-w-xl">
+              Access the complete ledger of your processed documents and verification results.
+            </p>
+          </motion.div>
 
-          {/* Search and Filter */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
+          {/* Controls */}
+          <div className="flex flex-col lg:flex-row gap-6 mb-12">
+            <div className="flex-1 spellbook-glass p-1 rounded-2xl flex">
+              <button 
+                onClick={() => setActiveTab('contracts')}
+                className={`flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'contracts' ? 'bg-white text-brand-background shadow-glow' : 'text-white/40 hover:text-white/60'}`}
+              >
+                Contracts ({contractHistory.length})
+              </button>
+              <button 
+                onClick={() => setActiveTab('land-verification')}
+                className={`flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'land-verification' ? 'bg-white text-brand-background shadow-glow' : 'text-white/40 hover:text-white/60'}`}
+              >
+                Land Records ({landVerificationHistory.length})
+              </button>
+            </div>
+            
+            <div className="flex gap-4">
+              <div className="relative group flex-1 lg:w-64">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-white transition-colors" />
+                <input 
                   type="text"
-                  placeholder="Search documents..."
+                  placeholder="Filter by title..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full bg-white/[0.02] border border-white/5 rounded-2xl pl-10 pr-4 py-3 text-xs focus:outline-none focus:border-white/20 focus:bg-white/[0.05] transition-all"
                 />
               </div>
-              
-              <div className="relative">
-                <FaFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <select
+              <div className="relative group">
+                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                <select 
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white appearance-none"
+                  className="bg-white/[0.02] border border-white/5 rounded-2xl pl-10 pr-8 py-3 text-xs focus:outline-none focus:border-white/20 appearance-none text-white/60 uppercase font-bold tracking-widest"
                 >
-                  <option value="">All Status</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Processing">Processing</option>
-                  {activeTab === 'land-verification' && <option value="Verified">Verified</option>}
+                  <option value="" className="bg-brand-background">All States</option>
+                  <option value="Verified" className="bg-brand-background">Verified</option>
+                  <option value="Processing" className="bg-brand-background">In-Progress</option>
                 </select>
               </div>
             </div>
           </div>
 
-          {/* Document List */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {activeTab === 'contracts' ? 'Recently Scanned Contracts' : 'Land Verification Results'}
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {activeTab === 'contracts' 
-                  ? 'Details of your scanned contracts.' 
-                  : 'Details of your land document verifications.'
-                }
-              </p>
-            </div>
+          {/* List */}
+          <div className="space-y-4">
+            {filteredHistory.length > 0 ? (
+              <AnimatePresence mode="popLayout">
+                {filteredHistory.map((doc, idx) => (
+                  <motion.div
+                    key={`${doc.type}-${doc.id}`}
+                    layout
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="spellbook-glass p-4 rounded-[28px] group hover:bg-white/[0.04] transition-all"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center gap-6">
+                      <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:border-white/30 transition-all">
+                        {activeTab === 'contracts' ? <FileText className="w-6 h-6 text-white/40" /> : <MapIcon className="w-6 h-6 text-white/40" />}
+                      </div>
 
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredHistory.length > 0 ? (
-                filteredHistory.map((doc) => (
-                  <div key={doc.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3">
-                          <div className="flex-shrink-0">
-                            {activeTab === 'contracts' ? (
-                              <FaFileAlt className="text-primary-500 text-xl" />
-                            ) : (
-                              <FaMapMarkedAlt className="text-primary-500 text-xl" />
-                            )}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white truncate">
-                              {doc.title}
-                            </h3>
-                            <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-sm text-gray-500 dark:text-gray-400">
-                                {activeTab === 'contracts' ? 'Scanned:' : 'Verified:'} {doc.dateScanned}
-                              </span>
-                              {activeTab === 'land-verification' && doc.ownershipType && (
-                                <span className="text-sm text-gray-500 dark:text-gray-400">
-                                  {doc.ownershipType} Land
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xl font-serif mb-1 truncate">{doc.title}</h3>
+                        <div className="flex flex-wrap items-center gap-6 text-[10px] uppercase font-bold tracking-widest">
+                          <span className="text-white/20">{doc.dateScanned}</span>
+                          {doc.alerts > 0 ? (
+                            <span className="text-red-400 flex items-center gap-2">
+                              <ShieldAlert className="w-3 h-3" />
+                              {doc.alerts} Risks
+                            </span>
+                          ) : (
+                            <span className="text-emerald-400 flex items-center gap-2">
+                              <ShieldCheck className="w-3 h-3" />
+                              Passed
+                            </span>
+                          )}
+                          <span className="text-white/40">{doc.ownershipType || (activeTab === 'contracts' ? 'LEGAL DEED' : 'PROPERTY RECORD')}</span>
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-4">
-                        {getStatusBadge(doc.status, doc.isLegal)}
-                        
-                        {doc.alerts > 0 && (
-                          <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                            {doc.alerts} Alert{doc.alerts > 1 ? 's' : ''}
-                          </span>
-                        )}
-
-                        <div className="flex items-center gap-2">
-                          <Link
-                            to={activeTab === 'contracts' ? `/analysis/${doc.id}` : `/verification-results/${doc.id}`}
-                            className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition-colors"
-                          >
-                            <FaEye />
-                            View
-                          </Link>
-                          
-                          {activeTab === 'land-verification' && (
-                            <div className="relative group">
-                              <button
-                                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
-                                title="Download Reports"
-                              >
-                                <FaDownload />
-                                Download
-                              </button>
-                              
-                              {/* Download dropdown */}
-                              <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                                <div className="py-1">
-                                  <button
-                                    onClick={() => downloadReport(doc, 'pdf')}
-                                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                  >
-                                    <FaFilePdf className="text-red-500" />
-                                    PDF Report
-                                  </button>
-                                  <button
-                                    onClick={() => downloadReport(doc, 'json')}
-                                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                  >
-                                    <FaFileAlt className="text-blue-500" />
-                                    JSON Data
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-3">
+                        <Link
+                          to={activeTab === 'contracts' ? `/analysis/${doc.id}` : `/verification-results/${doc.id}`}
+                          className="spellbook-btn-secondary py-3 px-8 text-xs group/btn flex items-center gap-3"
+                        >
+                          Access Report
+                          <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                        </Link>
                       </div>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-8 text-center">
-                  <div className="text-gray-400 dark:text-gray-500 mb-4">
-                    {activeTab === 'contracts' ? (
-                      <FaFileAlt className="mx-auto text-6xl" />
-                    ) : (
-                      <FaMapMarkedAlt className="mx-auto text-6xl" />
-                    )}
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    No documents found
-                  </h3>
-                  <p className="text-gray-500 dark:text-gray-400 mb-4">
-                    {activeTab === 'contracts' 
-                      ? "You haven't scanned any contracts yet."
-                      : "You haven't verified any land documents yet."
-                    }
-                  </p>
-                  <Link
-                    to={activeTab === 'contracts' ? '/upload' : '/land-verification'}
-                    className="bg-primary-600 text-white px-6 py-2 rounded-md hover:bg-primary-700 transition-colors"
-                  >
-                    {activeTab === 'contracts' ? 'Upload Contract' : 'Verify Land Document'}
-                  </Link>
-                </div>
-              )}
-            </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            ) : (
+              <div className="spellbook-glass p-20 rounded-[40px] text-center">
+                <FileStack className="w-12 h-12 text-white/10 mx-auto mb-6" />
+                <p className="text-white/20 italic">No historical records match your search criteria.</p>
+              </div>
+            )}
           </div>
-
         </div>
-      </div>
-    </>
+      </main>
+
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] aura-glow opacity-5 pointer-events-none" />
+    </div>
   );
 };
 

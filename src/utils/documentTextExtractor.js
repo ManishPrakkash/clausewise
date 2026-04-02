@@ -1,4 +1,8 @@
 import Tesseract from 'tesseract.js';
+import * as pdfjs from 'pdfjs-dist';
+
+// Set up PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 class DocumentTextExtractor {
   /**
@@ -52,19 +56,29 @@ class DocumentTextExtractor {
 
   /**
    * Extract text from PDF files
-   * Note: This is a placeholder - you'll need to add a PDF parsing library
    */
   async extractTextFromPDF(file) {
-    // For now, we'll use OCR on PDF as fallback
-    // In production, you should use a proper PDF parsing library like pdf.js or pdf-parse
-    console.log('PDF processing not yet implemented, using OCR fallback');
-    return await this.extractTextFromImage(file);
-    
-    // TODO: Implement proper PDF text extraction
-    // Example with pdf-parse library:
-    // const arrayBuffer = await file.arrayBuffer();
-    // const pdf = await pdfParse(arrayBuffer);
-    // return pdf.text;
+    try {
+      console.log('Starting PDF text extraction...');
+      const arrayBuffer = await file.arrayBuffer();
+      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+      
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(' ');
+        fullText += pageText + '\n';
+        console.log(`Extracted page ${i}/${pdf.numPages}`);
+      }
+      
+      console.log(`PDF extraction completed. Extracted ${fullText.length} characters`);
+      return fullText.trim() || 'No text detected in PDF';
+    } catch (error) {
+      console.error('PDF extraction failed, using OCR fallback:', error);
+      return await this.extractTextFromImage(file);
+    }
   }
 
   /**

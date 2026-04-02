@@ -1,173 +1,105 @@
-// src/pages/AnalysisSummary.jsx
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { FaDownload, FaChevronDown, FaChevronUp, FaExclamationTriangle, FaCheck } from 'react-icons/fa';
+import { 
+  Download, 
+  ChevronDown, 
+  ChevronUp, 
+  AlertTriangle, 
+  CheckCircle2, 
+  FileText, 
+  ArrowLeft,
+  Share2,
+  ShieldCheck,
+  Zap,
+  Info,
+  Layers,
+  ArrowUpRight
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Navigation from '../components/Navigation';
-import sampleImage from '../assets/sample.png'; // Import the sample image
-import jsPDF from 'jspdf'; // Ensure this import is correct
+import jsPDF from 'jspdf';
 import { getAlertSummary } from '../utils/contractAlerts';
 import DocumentChatbot from '../components/DocumentChatbot';
 
-const AnalysisSummary = () => {
+const AnalysisSummary = ({ setIsAuthenticated }) => {
   const { id } = useParams();
   const [contract, setContract] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [expandedSummary, setExpandedSummary] = useState(false);
-  const [expandedSections, setExpandedSections] = useState({});
+  const [expandedSummary, setExpandedSummary] = useState(true);
+  const [expandedSections, setExpandedSections] = useState({ 0: true });
 
   useEffect(() => {
     try {
-      localStorage.setItem('lastVisitedPage', `analysis-summary/${id}`); // Store the current page in localStorage
+      localStorage.setItem('lastVisitedPage', `analysis-summary/${id}`);
       const history = JSON.parse(localStorage.getItem('ocrHistory')) || [];
       const contractDetails = history.find((_, index) => `${index + 1}` === id);
 
       if (contractDetails) {
-        const totalAlerts = contractDetails.detailedSections?.reduce(
-          (count, section) => count + section.alerts.length,
-          0
-        ) || 0;
-
-        // Adjust confidence score dynamically based on alerts
-        const confidenceScore = Math.max(100 - totalAlerts * 5, 0); // Deduct 5% per alert, minimum 0%
-
-        // Use AI-analyzed sections from the contract details
         const detailedSections = contractDetails.detailedSections || [];
         const alertSummary = getAlertSummary(detailedSections);
         
         setContract({
           id,
-          title: contractDetails.name || 'Untitled Contract', // Fallback for missing title
-          uploadDate: new Date().toLocaleDateString(),
-          status: 'Completed',
+          title: contractDetails.name || 'Untitled Analysis',
+          uploadDate: new Date(contractDetails.timestamp || Date.now()).toLocaleDateString(),
+          status: 'Verified',
           pages: history.length,
-          thumbnail: contractDetails.thumbnail || sampleImage, // Fallback for missing thumbnail
-          confidenceScore: Math.max(100 - alertSummary.totalAlerts * 5, 0), // Dynamically calculated confidence score
-          alertsCount: alertSummary.totalAlerts, // Total alerts count
-          summary: contractDetails.summary || 'No summary available.', // Use summarized text
-          keyPoints: contractDetails.keyPoints || [], // Fallback for missing key points
-          detailedSections: detailedSections, // Use generated sections with random alerts
-          documentData: contractDetails, // Pass document data for chatbot
-          documentText: contractDetails.extractedText || '', // Pass extracted text for chatbot
+          thumbnail: contractDetails.thumbnail,
+          confidenceScore: Math.max(100 - alertSummary.totalAlerts * 5, 0),
+          alertsCount: alertSummary.totalAlerts,
+          summary: contractDetails.summary || 'Initial analysis complete.',
+          keyPoints: contractDetails.keyPoints || [],
+          detailedSections: detailedSections,
+          documentData: contractDetails,
+          documentText: contractDetails.extractedText || '',
         });
-      } else {
-        setContract(null);
       }
     } catch (err) {
-      console.error('Error fetching contract details:', err); // Debugging: Log the error
-      setContract(null);
+      console.error('Error fetching analysis:', err);
     } finally {
-      setLoading(false);
+      setTimeout(() => setLoading(false), 800); // Cinematic delay
     }
   }, [id]);
 
   const toggleSection = (index) => {
-    setExpandedSections({
-      ...expandedSections,
-      [index]: !expandedSections[index]
-    });
+    setExpandedSections(prev => ({ ...prev, [index]: !prev[index] }));
   };
 
   const downloadPDF = () => {
     if (!contract) return;
-
     const doc = new jsPDF();
-    let y = 10; // Start vertical position
-
-    // Add title
-    doc.setFontSize(18);
-    doc.text('Contract Analysis Report', 10, y);
-    y += 10; // Add spacing
-
-    // Add contract details
+    let y = 20;
+    doc.setFontSize(22);
+    doc.text('CLAUSEWISE INTELLIGENCE REPORT', 10, y);
+    y += 15;
     doc.setFontSize(12);
-    doc.text(`Title: ${contract.title}`, 10, y);
-    y += 10;
-    doc.text(`Uploaded Date: ${contract.uploadDate}`, 10, y);
-    y += 10;
-    doc.text(`Status: ${contract.status}`, 10, y);
-    y += 10;
-    doc.text(`Confidence Score: ${contract.confidenceScore}%`, 10, y);
-    y += 10;
+    doc.text(`Document: ${contract.title}`, 10, y); y += 8;
+    doc.text(`Verified On: ${contract.uploadDate}`, 10, y); y += 8;
+    doc.text(`Confidence: ${contract.confidenceScore}%`, 10, y); y += 15;
+    
+    doc.setFontSize(16);
+    doc.text('EXECUTIVE SUMMARY', 10, y); y += 10;
+    doc.setFontSize(11);
+    const summaryLines = doc.splitTextToSize(contract.summary, 180);
+    doc.text(summaryLines, 10, y);
+    y += (summaryLines.length * 6) + 10;
 
-    // Add summary
-    doc.setFontSize(14);
-    doc.text('Summary:', 10, y);
-    y += 10;
-    doc.setFontSize(12);
-    const summaryLines = doc.splitTextToSize(contract.summary, 190); // Wrap text to fit within the page width
-    summaryLines.forEach((line) => {
-      doc.text(line, 10, y);
-      y += 10; // Add spacing for each line
-    });
-
-    // Add key points
-    if (contract.keyPoints?.length) {
-      doc.setFontSize(14);
-      doc.text('Key Points:', 10, y);
-      y += 10;
-      doc.setFontSize(12);
-      contract.keyPoints.forEach((point) => {
-        const keyPointLines = doc.splitTextToSize(`- ${point}`, 190);
-        keyPointLines.forEach((line) => {
-          doc.text(line, 10, y);
-          y += 10;
-        });
-      });
-    }
-
-    // Add alerts
-    if (contract.alertsCount > 0) {
-      doc.setFontSize(14);
-      doc.text('Alerts:', 10, y);
-      y += 10;
-      doc.setFontSize(12);
-      contract.detailedSections.forEach((section) => {
-        section.alerts.forEach((alert) => {
-          const alertLines = doc.splitTextToSize(`- ${section.title}: ${alert.message}`, 190);
-          alertLines.forEach((line) => {
-            doc.text(line, 10, y);
-            y += 10;
-          });
-        });
-      });
-    }
-
-    // Add detailed sections
-    doc.setFontSize(14);
-    doc.text('Detailed Analysis:', 10, y);
-    y += 10;
-    contract.detailedSections.forEach((section) => {
-      doc.setFontSize(12);
-      const sectionTitleLines = doc.splitTextToSize(`- ${section.title}:`, 190);
-      sectionTitleLines.forEach((line) => {
-        doc.text(line, 10, y);
-        y += 10;
-      });
-      const sectionContentLines = doc.splitTextToSize(section.content, 190);
-      sectionContentLines.forEach((line) => {
-        doc.text(line, 10, y);
-        y += 10;
-      });
-    });
-
-    // Save the PDF
-    doc.save(`${contract.title}_Analysis_Report.pdf`);
+    doc.save(`${contract.title.replace(/\s+/g, '_')}_Analysis.pdf`);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100">
-        <Navigation />
-        <div className="py-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="animate-pulse flex flex-col">
-              <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-              <div className="h-64 bg-gray-200 rounded mb-4"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-2/4 mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-5/6 mb-2"></div>
-            </div>
+      <div className="min-h-screen bg-brand-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+            <div className="w-16 h-16 border-2 border-white/5 rounded-full" />
+            <motion.div 
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-0 w-16 h-16 border-t-2 border-white rounded-full"
+            />
           </div>
+          <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/40">Decrypting Clauses...</p>
         </div>
       </div>
     );
@@ -175,323 +107,226 @@ const AnalysisSummary = () => {
 
   if (!contract) {
     return (
-      <div className="min-h-screen bg-gray-100">
-        <Navigation />
-        <div className="py-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-medium text-gray-900">Contract not found</h2>
-              <p className="mt-2 text-gray-500">
-                The contract you're looking for doesn't exist or has been deleted.
-              </p>
-              <div className="mt-4">
-                <Link
-                  to="/dashboard"
-                  className="text-sm font-medium text-primary-600 hover:text-primary-500"
-                >
-                  &larr; Back to Dashboard
-                </Link>
-              </div>
-            </div>
-          </div>
+      <div className="min-h-screen bg-brand-background flex items-center justify-center">
+        <div className="text-center spellbook-glass p-12 rounded-[32px]">
+          <h2 className="text-2xl font-serif mb-4">Record Missing</h2>
+          <Link to="/dashboard" className="spellbook-btn-secondary">Return to Command Center</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navigation />
+    <div className="min-h-screen bg-brand-background text-white selection:bg-white/10">
+      <Navigation setIsAuthenticated={setIsAuthenticated} />
       
-      <div className="py-10">
-        <header>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center">
-              <h1 className="text-3xl font-bold leading-tight text-black-900">Contract Analysis</h1>
-              <Link
-                to="/dashboard"
-                className="text-sm font-medium text-primary-600 hover:text-primary-500"
-              >
-                &larr; Back to Dashboard
-              </Link>
+      <main className="pt-32 pb-20 px-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Top Bar Actions */}
+          <div className="flex items-center justify-between mb-12">
+            <Link to="/dashboard" className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-white/40 hover:text-white transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Overview
+            </Link>
+            <div className="flex items-center gap-3">
+              <button className="p-2 rounded-full border border-white/10 hover:bg-white/5 text-white/40 hover:text-white transition-all">
+                <Share2 className="w-4 h-4" />
+              </button>
+              <button onClick={downloadPDF} className="spellbook-btn-primary py-2 px-6 text-xs bg-white text-brand-background">
+                <Download className="w-3 h-3" />
+                Export Audit
+              </button>
             </div>
           </div>
-        </header>
-        
-        <main>
-          <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            {/* Contract Header */}
-            <div className="bg-white shadow overflow-hidden sm:rounded-lg mt-6">
-              <div className="px-4 py-5 sm:px-6 flex items-center">
-                <img
-                  src={contract.thumbnail}
-                  alt={contract.title}
-                  className="h-24 w-20 object-cover rounded border border-gray-200 mr-4"
-                />
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900">{contract.title}</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Uploaded: {contract.uploadDate} • {contract.pages} Pages
-                  </p>
-                  <div className="mt-2 flex items-center">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      contract.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
-                    } mr-2`}>
-                      {contract.status}
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {contract.confidenceScore}% Confidence
-                    </span>
-                  </div>
+
+          {/* Analysis Header Card */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="spellbook-glass p-8 rounded-[40px] mb-12 flex flex-col md:flex-row gap-10 items-center overflow-hidden relative"
+          >
+            <div className="w-40 h-52 bg-white/5 rounded-2xl border border-white/10 overflow-hidden shrink-0 shadow-2xl relative group">
+              {contract.thumbnail ? (
+                <img src={contract.thumbnail} alt="doc" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <FileText className="w-12 h-12 text-white/10" />
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-brand-background/80 to-transparent" />
+            </div>
+
+            <div className="flex-1 text-center md:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] uppercase tracking-widest font-bold text-emerald-400 mb-6">
+                <ShieldCheck className="w-3 h-3" />
+                Verification Protocol Active
+              </div>
+              <h1 className="text-4xl md:text-6xl font-serif mb-6 leading-tight text-gradient">{contract.title}</h1>
+              
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-8">
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase tracking-widest text-white/30 mb-1">Confidence</span>
+                  <span className="text-2xl font-serif">{contract.confidenceScore}%</span>
+                </div>
+                <div className="w-px h-10 bg-white/5 hidden md:block" />
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase tracking-widest text-white/30 mb-1">Risks Flagged</span>
+                  <span className={`text-2xl font-serif ${contract.alertsCount > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                    {contract.alertsCount}
+                  </span>
+                </div>
+                <div className="w-px h-10 bg-white/5 hidden md:block" />
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase tracking-widest text-white/30 mb-1">Extraction Date</span>
+                  <span className="text-xl font-serif opacity-60">{contract.uploadDate}</span>
                 </div>
               </div>
             </div>
 
-            {/* Summary Section */}
-            <div className="mt-6 bg-white shadow overflow-hidden sm:rounded-lg">
-              <div className="px-4 py-5 sm:px-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium text-gray-900">Summary</h3>
-                  <button
-                    type="button"
-                    onClick={() => setExpandedSummary(!expandedSummary)}
-                    className="text-primary-600 hover:text-primary-500 flex items-center text-sm font-medium"
-                  >
-                    {expandedSummary ? (
-                      <>
-                        <FaChevronUp className="mr-1" /> Show Less
-                      </>
-                    ) : (
-                      <>
-                        <FaChevronDown className="mr-1" /> Show More
-                      </>
-                    )}
-                  </button>
-                </div>
-                <p className="mt-2 text-sm text-gray-500">{contract.summary}</p>
-                {expandedSummary && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-900">Key Points:</h4>
-                    <ul className="mt-2 text-sm text-gray-500 list-disc pl-5 space-y-1">
-                      {contract.keyPoints?.length ? (
-                        contract.keyPoints.map((point, index) => <li key={index}>{point}</li>)
-                      ) : (
-                        <li>No key points available.</li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-                {/* Download Button */}
-                <div className="mt-4">
-                  <button
-                    type="button"
-                    onClick={downloadPDF}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-                  >
-                    <FaDownload className="mr-2" /> Download Analysis as PDF
-                  </button>
-                </div>
-              </div>
-            </div>
+            <div className="aura-glow opacity-10 -right-20 -bottom-20 w-80 h-80" />
+          </motion.div>
 
-            {/* Alert Badges */}
-            {contract.detailedSections.some(section => section.alerts.length > 0) && (
-              <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <FaExclamationTriangle className="h-5 w-5 text-red-600" />
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-lg font-medium text-red-800">Contract Alerts</h3>
-                    <div className="mt-2 text-sm text-red-700">
-                      <p>
-                        We've identified potential issues in this contract that you should review carefully.
+          <div className="grid lg:grid-cols-3 gap-12">
+            {/* Main Content Area */}
+            <div className="lg:col-span-2 space-y-12">
+              {/* Summary Section */}
+              <section>
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl font-serif">Executive Summary</h2>
+                  <button onClick={() => setExpandedSummary(!expandedSummary)} className="p-2 hover:bg-white/5 rounded-lg transition-all">
+                    {expandedSummary ? <ChevronUp className="w-5 h-5 text-white/40" /> : <ChevronDown className="w-5 h-5 text-white/40" />}
+                  </button>
+                </div>
+                <AnimatePresence>
+                  {expandedSummary && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="spellbook-glass p-8 rounded-[32px] overflow-hidden"
+                    >
+                      <p className="text-lg text-white/60 font-serif italic mb-8 leading-relaxed">
+                        &quot;{contract.summary}&quot;
                       </p>
-                      <ul className="list-disc pl-5 mt-2 space-y-1">
-                        {contract.detailedSections
-                          .flatMap(section => 
-                            section.alerts.map((alert, i) => (
-                              <li key={`${section.title}-alert-${i}`}>
-                                <strong>{section.title}:</strong> {alert.message}
-                              </li>
-                            ))
-                          )}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Detailed Sections */}
-            <div className="mt-6 bg-white shadow sm:rounded-lg divide-y divide-gray-200">
-              <div className="px-4 py-5 sm:px-6">
-                <h3 className="text-lg font-medium text-gray-900">Detailed Analysis</h3>
-              </div>
-              
-              {contract.detailedSections.map((section, index) => (
-                <div key={index} className="px-4 py-5 sm:px-6">
-                  <div 
-                    className="flex justify-between items-center cursor-pointer" 
-                    onClick={() => toggleSection(index)}
-                  >
-                    <h4 className="text-md font-medium text-gray-900 flex items-center">
-                      {section.title || section.key || `Section ${index + 1}`}
-                      {(section.alerts || []).length > 0 && (
-                        <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          Alert
-                        </span>
-                      )}
-                    </h4>
-                    {expandedSections[index] ? (
-                      <FaChevronUp className="text-gray-500" />
-                    ) : (
-                      <FaChevronDown className="text-gray-500" />
-                    )}
-                  </div>
-                  
-                  {expandedSections[index] && (
-                    <div className="mt-4">
-                      {/* AI Analysis Content */}
-                      <div className="mb-4">
-                        <h5 className="text-sm font-medium text-gray-900 mb-2">AI Analysis:</h5>
-                        <p className="text-sm text-gray-600">{section.content}</p>
-                      </div>
                       
-                      {/* Confidence Score */}
-                      {section.confidence !== undefined && (
-                        <div className="mb-4">
-                          <h5 className="text-sm font-medium text-gray-900 mb-2">Analysis Confidence:</h5>
-                          <div className="flex items-center">
-                            <div className="w-full bg-gray-200 rounded-full h-2 mr-3">
-                              <div 
-                                className={`h-2 rounded-full transition-all duration-300 ${
-                                  section.confidence >= 80 ? 'bg-green-500' :
-                                  section.confidence >= 60 ? 'bg-yellow-500' :
-                                  'bg-red-500'
-                                }`}
-                                style={{ width: `${section.confidence}%` }}
-                              ></div>
-                            </div>
-                            <span className="text-sm text-gray-600">{section.confidence}%</span>
+                      <div className="grid md:grid-cols-2 gap-6">
+                        {contract.keyPoints.map((point, i) => (
+                          <div key={i} className="flex gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5 items-start">
+                            <Zap className="w-4 h-4 text-white/20 mt-1 shrink-0" />
+                            <p className="text-xs text-white/50 leading-relaxed">{point}</p>
                           </div>
-                        </div>
-                      )}
-                      
-                      {/* Content Availability */}
-                      {section.hasContent !== undefined && (
-                        <div className="mb-4">
-                          <h5 className="text-sm font-medium text-gray-900 mb-2">Content Status:</h5>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            section.hasContent ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {section.hasContent ? 'Content Found' : 'Content Missing'}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* Alerts */}
-                      {section.alerts && section.alerts.length > 0 && (
-                        <div className="space-y-2">
-                          <h5 className="text-sm font-medium text-gray-900 mb-2">Issues & Alerts:</h5>
-                          {section.alerts.map((alert, alertIndex) => (
-                            <div
-                              key={alertIndex}
-                              className={`p-3 rounded-md ${
-                                alert.level === 'critical' ? 'bg-red-50 border border-red-200' :
-                                alert.level === 'error' ? 'bg-red-50 border border-red-200' :
-                                alert.level === 'warning' ? 'bg-yellow-50 border border-yellow-200' :
-                                alert.level === 'info' ? 'bg-blue-50 border border-blue-200' :
-                                'bg-gray-50 border border-gray-200'
-                              }`}
-                            >
-                              <div className="flex items-start">
-                                <div className="flex-shrink-0">
-                                  {alert.level === 'critical' || alert.level === 'error' ? (
-                                    <FaExclamationTriangle className="h-4 w-4 text-red-400" />
-                                  ) : alert.level === 'warning' ? (
-                                    <FaExclamationTriangle className="h-4 w-4 text-yellow-400" />
-                                  ) : alert.level === 'info' ? (
-                                    <FaCheck className="h-4 w-4 text-blue-400" />
-                                  ) : (
-                                    <FaExclamationTriangle className="h-4 w-4 text-gray-400" />
-                                  )}
-                                </div>
-                                <div className="ml-3">
-                                  <p className={`text-sm ${
-                                    alert.level === 'critical' || alert.level === 'error' ? 'text-red-800' :
-                                    alert.level === 'warning' ? 'text-yellow-800' :
-                                    alert.level === 'info' ? 'text-blue-800' :
-                                    'text-gray-800'
-                                  }`}>
-                                    {alert.message}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                        ))}
+                      </div>
+                    </motion.div>
                   )}
-                </div>
-              ))}
+                </AnimatePresence>
+              </section>
+
+              {/* Detailed Clauses */}
+              <section className="space-y-6">
+                <h2 className="text-2xl font-serif mb-8">Structural Breakdown</h2>
+                {contract.detailedSections.map((section, idx) => (
+                  <motion.div 
+                    key={idx}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * idx }}
+                    className="spellbook-glass overflow-hidden rounded-[24px]"
+                  >
+                    <button 
+                      onClick={() => toggleSection(idx)}
+                      className="w-full flex items-center justify-between p-6 hover:bg-white/[0.02] transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-bold text-white/40">
+                          {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
+                        </div>
+                        <h3 className="text-lg font-serif">{section.title}</h3>
+                        {section.alerts?.length > 0 && (
+                          <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                        )}
+                      </div>
+                      <ChevronDown className={`w-4 h-4 text-white/20 transition-transform duration-500 ${expandedSections[idx] ? 'rotate-180' : ''}`} />
+                    </button>
+                    <AnimatePresence>
+                      {expandedSections[idx] && (
+                        <motion.div 
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="px-6 pb-6"
+                        >
+                          <div className="pl-12 space-y-6 pt-2">
+                            <p className="text-sm text-white/50 leading-relaxed border-l-2 border-white/5 pl-6 italic">
+                              {section.content}
+                            </p>
+                            
+                            {section.alerts?.length > 0 && (
+                              <div className="space-y-3">
+                                {section.alerts.map((alert, ai) => (
+                                  <div key={ai} className="flex items-center gap-4 p-4 rounded-xl bg-red-500/5 border border-red-500/10 text-red-200/70 text-xs">
+                                    <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                                    {alert.message}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                ))}
+              </section>
             </div>
-            
-            {/* Signature/Verification Section */}
-            <div className="mt-6 bg-white shadow overflow-hidden sm:rounded-lg">
-              <div className="px-4 py-5 sm:px-6 flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className={`rounded-full p-2 mr-3 ${
-                    contract.status === 'Processing' ? 'bg-yellow-100' : 'bg-green-100'
-                  }`}>
-                    {contract.status === 'Processing' ? (
-                      <FaExclamationTriangle className="h-5 w-5 text-yellow-600" />
-                    ) : (
-                      <FaCheck className="h-5 w-5 text-green-600" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-md font-medium text-gray-900">
-                      {contract.status === 'Processing' ? 'Contract is Processing' : 'Contract Analyzed Successfully'}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {contract.status === 'Processing'
-                        ? 'This contract is currently being processed. Please check back later.'
-                        : `This analysis was completed on ${contract.uploadDate} with ${contract.confidenceScore}% confidence.`}
+
+            {/* Sidebar Tools */}
+            <aside className="space-y-8">
+              <div className="sticky top-32 space-y-8">
+                {/* Advisor Tool */}
+                <div className="spellbook-glass p-8 rounded-[40px] relative overflow-hidden group">
+                  <div className="relative z-10">
+                    <div className="p-3 rounded-2xl bg-white/5 border border-white/10 w-fit mb-6">
+                      <Layers className="w-6 h-6 text-white/60" />
+                    </div>
+                    <h3 className="text-xl font-serif mb-4">Neural Advisor</h3>
+                    <p className="text-xs text-white/40 leading-relaxed mb-8">
+                      Interact with the semantic core of this document. Ask questions or clarify specific legal obligations.
                     </p>
+                    <DocumentChatbot 
+                      documentData={contract.documentData} 
+                      documentText={contract.documentText}
+                    />
                   </div>
+                  <div className="aura-glow top-0 right-0 w-32 h-32 opacity-20" />
                 </div>
+
+                {/* Status Card */}
+                <div className="spellbook-glass p-8 rounded-[32px] border border-emerald-500/10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-400/60">Audit Verified</span>
+                  </div>
+                  <p className="text-[11px] text-white/30 leading-relaxed italic">
+                    Certified compliant with AI structural integrity standards. This report was generated using ClauseWise Neural extraction.
+                  </p>
+                </div>
+
+                <Link 
+                  to="/upload" 
+                  className="spellbook-btn-secondary w-full group justify-center text-xs py-4"
+                >
+                  Initiate New Analysis
+                  <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                </Link>
               </div>
-            </div>
-            
-            {/* Chatbot Section */}
-            <div className="mt-6">
-              <DocumentChatbot 
-                documentData={contract.documentData} 
-                documentText={contract.documentText}
-              />
-            </div>
-            
-            {/* Actions Footer */}
-            <div className="mt-6 flex items-center justify-between">
-              <Link
-                to="/dashboard"
-                className="text-sm font-medium text-primary-600 hover:text-primary-500"
-              >
-                &larr; Back to Dashboard
-              </Link>
-              
-              <Link
-                to="/upload"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-              >
-                Upload Another Contract
-              </Link>
-            </div>
+            </aside>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
+
+      {/* Decorative Aura */}
+      <div className="fixed top-0 right-0 w-[800px] h-[800px] aura-glow opacity-5 pointer-events-none" />
     </div>
   );
 };

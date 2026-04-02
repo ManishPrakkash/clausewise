@@ -1,7 +1,20 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { 
+  Upload, 
+  Loader2, 
+  FileText, 
+  X, 
+  Download, 
+  History, 
+  ShieldCheck, 
+  Search,
+  MapPin,
+  ChevronRight,
+  Info
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Navigation from '../components/Navigation';
-import { FaUpload, FaSpinner, FaFileAlt, FaTimes, FaDownload, FaHistory } from 'react-icons/fa';
 import documentExtractor from '../utils/documentExtractor';
 import RecentVerifications from '../components/RecentVerifications';
 
@@ -16,12 +29,12 @@ const LandVerification = ({ setIsAuthenticated }) => {
     const fileArray = Array.from(selectedFiles);
     const validFiles = fileArray.filter(file => {
       const isValidType = file.type.startsWith('image/') || file.type === 'application/pdf';
-      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB limit
+      const isValidSize = file.size <= 10 * 1024 * 1024;
       return isValidType && isValidSize;
     });
 
     if (validFiles.length !== fileArray.length) {
-      setError('Some files were rejected. Please ensure all files are images or PDFs under 10MB.');
+      setError('Some documents were excluded due to incompatible format or size constraints.');
     } else {
       setError('');
     }
@@ -32,18 +45,7 @@ const LandVerification = ({ setIsAuthenticated }) => {
   const handleDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
-    const droppedFiles = e.dataTransfer.files;
-    handleFileUpload(droppedFiles);
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setDragOver(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setDragOver(false);
+    handleFileUpload(e.dataTransfer.files);
   };
 
   const removeFile = (index) => {
@@ -51,223 +53,193 @@ const LandVerification = ({ setIsAuthenticated }) => {
   };
 
   const processLandDocuments = async () => {
-    if (files.length === 0) {
-      setError('Please upload at least one land document.');
-      return;
-    }
-
+    if (files.length === 0) return setError('At least one land record is required for verification.');
     setIsProcessing(true);
     setError('');
 
     try {
       const results = [];
-      
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        
         try {
-          // Process each document using OCR and data extraction
           const verificationResult = await documentExtractor.processDocument(file);
-          results.push(verificationResult);
+          results.push({
+            ...verificationResult,
+            id: verificationResult.id || Date.now().toString() + i,
+            timestamp: new Date().toISOString()
+          });
         } catch (error) {
-          console.error(`Error processing ${file.name}:`, error);
-          // Create fallback result for failed documents
           results.push({
             id: Date.now().toString() + i,
             documentName: file.name,
             uploadDate: new Date().toLocaleDateString(),
-            status: 'Processing Failed',
+            status: 'Extraction Failed',
             isLegal: false,
             ownershipType: 'Unknown',
-            documentType: 'Unknown',
-            surveyNumber: 'Unknown',
-            district: 'Unknown',
-            taluk: 'Unknown',
-            village: 'Unknown',
-            area: 'Unknown',
-            owner: 'Unknown',
-            classification: 'Unknown',
-            discrepancies: ['Failed to extract document information'],
-            confidence: 0,
-            verificationDetails: {
-              registrationStatus: 'Failed',
-              portalMatch: false,
-              ownershipVerified: false,
-              boundariesConfirmed: false,
-              taxStatus: 'Unknown'
-            }
+            discrepancies: ['Optical character recognition failure'],
+            timestamp: new Date().toISOString()
           });
         }
       }
 
-      // Store all results in localStorage
       const existingResults = JSON.parse(localStorage.getItem('landVerificationResults')) || [];
-      results.forEach(result => {
-        existingResults.unshift(result);
-      });
+      results.forEach(result => existingResults.unshift(result));
       localStorage.setItem('landVerificationResults', JSON.stringify(existingResults));
-
-      // Navigate to results page for the first document
       navigate(`/verification-results/${results[0].id}`);
-
     } catch (err) {
-      console.error('Error processing land documents:', err);
-      setError('Error processing documents. Please try again.');
+      setError('Verification engine encountered an internal disruption.');
     } finally {
       setIsProcessing(false);
     }
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-brand-background text-white selection:bg-white/10">
       <Navigation setIsAuthenticated={setIsAuthenticated} />
-      <div className="min-h-screen py-6">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+      
+      <main className="pt-32 pb-20 px-6">
+        <div className="max-w-5xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold tracking-tight mb-4">
-              Land Document Verification
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Upload your Tamil Nadu land documents for automated verification against government records
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-12"
+          >
+            <div className="flex items-center gap-3 text-white/40 mb-4">
+              <MapPin className="w-5 h-5" />
+              <span className="text-[10px] uppercase tracking-[0.3em] font-bold">Territorial Audit</span>
+            </div>
+            <h1 className="text-5xl font-serif mb-4 text-gradient">Land Verification</h1>
+            <p className="text-white/40 max-w-xl">
+              Cross-reference your territorial deeds with government archives using our neural validation engine.
             </p>
-          </div>
+          </motion.div>
 
-          {/* Upload Section */}
-          <div className="glass rounded-2xl p-6 mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Upload Land Documents
-            </h2>
+          <div className="grid lg:grid-cols-3 gap-12">
+            <div className="lg:col-span-2 space-y-8">
+              {/* Dropzone */}
+              <motion.div
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                className={`spellbook-glass p-12 rounded-[40px] border-2 border-dashed transition-all duration-500 text-center relative overflow-hidden group
+                  ${dragOver ? 'border-white/40 bg-white/5' : 'border-white/10 hover:border-white/20 bg-white/[0.02]'}`}
+              >
+                <div className="relative z-10">
+                  <div className={`w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6 transition-transform duration-500 ${dragOver ? 'scale-110' : 'group-hover:scale-105'}`}>
+                    <Upload className="w-6 h-6 text-white/40" />
+                  </div>
+                  <h3 className="text-xl font-medium mb-2">Deposit Records</h3>
+                  <p className="text-xs text-white/30 mb-8 max-w-xs mx-auto italic">
+                    Supported: Patta, Chitta, FMB, and Title Deeds (PDF/Image)
+                  </p>
+                  
+                  <label className="spellbook-btn-secondary py-3 px-8 text-xs cursor-pointer inline-flex">
+                    Select Archives
+                    <input type="file" className="hidden" multiple onChange={(e) => handleFileUpload(e.target.files)} disabled={isProcessing} />
+                  </label>
+                </div>
+                {dragOver && <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />}
+              </motion.div>
 
-            {error && (
-              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md">
-                <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
-                <p className="text-sm text-red-700 dark:text-red-300 mt-1">{error}</p>
-              </div>
-            )}
-
-            {/* File Drop Zone */}
-            <div
-              className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                dragOver
-                  ? 'border-primary-400 bg-primary-50/50 dark:bg-primary-900/30'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-              }`}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-            >
-              <FaUpload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <div className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Drop your land documents here
-              </div>
-              <div className="text-gray-500 dark:text-gray-400 mb-4">
-                or drag and drop
-              </div>
-
-              <label className="cursor-pointer">
-                <span className="btn-primary px-6 py-3 inline-block">
-                  Choose Files
-                </span>
-                <input
-                  type="file"
-                  className="hidden"
-                  multiple
-                  accept="image/*,.pdf"
-                  onChange={(e) => handleFileUpload(e.target.files)}
-                  disabled={isProcessing}
-                />
-              </label>
-
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-                PDF, PNG, JPG up to 10 documents, 10MB each
-              </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                Supported documents: Patta, Chitta, A-Register Extract, FMB, Title Deeds
-              </p>
+              {/* Files Queue */}
+              <AnimatePresence>
+                {files.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-3"
+                  >
+                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-white/20 px-4">Extraction Queue ({files.length}/10)</h4>
+                    {files.map((file, idx) => (
+                      <motion.div 
+                        key={idx}
+                        className="spellbook-glass p-4 rounded-2xl flex items-center justify-between group"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-white/30 transition-all">
+                            <FileText className="w-4 h-4 text-white/20" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium truncate max-w-xs">{file.name}</p>
+                            <p className="text-[9px] text-white/20 uppercase font-bold tracking-tighter">{(file.size / (1024 * 1024)).toFixed(2)} MB • {file.type.split('/')[1]}</p>
+                          </div>
+                        </div>
+                        <button onClick={() => removeFile(idx)} className="p-2 text-white/10 hover:text-red-400 transition-colors">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {/* Uploaded Files */}
-            {files.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                  Uploaded Documents ({files.length}/10)
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {files.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
-                    >
-                      <FaFileAlt className="text-primary-500 mr-3 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {file.name}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => removeFile(index)}
-                        className="ml-3 text-red-400 hover:text-red-600 flex-shrink-0"
-                        disabled={isProcessing}
-                      >
-                        <FaTimes />
-                      </button>
-                    </div>
-                  ))}
+            {/* Sidebar */}
+            <div className="space-y-8">
+              <div className="spellbook-glass p-8 rounded-[40px] space-y-6">
+                <div className="flex items-center gap-3 text-white/60 mb-2">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                  <span className="text-[10px] uppercase tracking-widest font-bold">Verification Logic</span>
+                </div>
+                <p className="text-xs text-white/40 leading-relaxed italic">
+                  Documents are analyzed for survey number authenticity and matched against regional land registries in real-time.
+                </p>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                    <span className="text-[10px] uppercase text-white/20 font-bold">E-Service Link</span>
+                    <span className="text-[10px] text-emerald-400 font-bold uppercase">Active</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                    <span className="text-[10px] uppercase text-white/20 font-bold">Optical Engine</span>
+                    <span className="text-[10px] text-white/60 font-bold uppercase">Neural</span>
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* Process Button */}
-            <div className="mt-6 flex justify-center">
+              {error && (
+                <div className="p-6 rounded-[32px] bg-red-500/5 border border-red-500/10 text-red-200/80 text-[10px] uppercase tracking-widest font-bold flex items-center gap-4">
+                  <Info className="w-5 h-5 shrink-0" />
+                  {error}
+                </div>
+              )}
+
               <button
                 onClick={processLandDocuments}
                 disabled={files.length === 0 || isProcessing}
-                className="btn-primary px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="spellbook-btn-primary w-full py-4 text-xs group justify-center"
               >
                 {isProcessing ? (
                   <>
-                    <FaSpinner className="animate-spin" />
-                    Processing...
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Analyzing Territory...
                   </>
                 ) : (
-                  'Verify Documents'
+                  <>
+                    Verify Records
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </>
                 )}
               </button>
             </div>
-
-            {/* Info Section */}
-            <div className="mt-6 p-4 bg-blue-50/70 dark:bg-blue-900/40 rounded-xl">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>Verification Process:</strong> Your documents will be automatically processed and verified against Tamil Nadu Land Records e-Service Portal. We check document authenticity, ownership status, and cross-reference with government databases.
-              </p>
-            </div>
           </div>
 
-          {/* Recent Verification Results */}
-          <div className="glass rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Recent Verifications
-              </h2>
-              <Link
-                to="/history"
-                className="flex items-center gap-2 text-primary-600 hover:text-primary-700 transition-colors"
-              >
-                <FaHistory />
-                View All
+          <div className="mt-20">
+            <div className="flex items-center justify-between mb-8 px-4">
+              <h2 className="text-2xl font-serif">Recent Validations</h2>
+              <Link to="/history" className="text-[10px] uppercase tracking-widest font-bold text-white/40 hover:text-white transition-colors flex items-center gap-2">
+                <History className="w-4 h-4" />
+                History
               </Link>
             </div>
-            
             <RecentVerifications />
           </div>
         </div>
-      </div>
-    </>
+      </main>
+
+      <div className="fixed top-0 right-0 w-[500px] h-[500px] aura-glow opacity-5 pointer-events-none" />
+    </div>
   );
 };
 

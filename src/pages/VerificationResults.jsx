@@ -1,7 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { 
+  CheckCircle2, 
+  AlertTriangle, 
+  XCircle, 
+  Download, 
+  ArrowLeft, 
+  FileText, 
+  ShieldCheck, 
+  Globe, 
+  MapPin,
+  ChevronRight,
+  Database,
+  History
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Navigation from '../components/Navigation';
-import { FaCheckCircle, FaExclamationTriangle, FaTimesCircle, FaDownload, FaArrowLeft, FaFilePdf, FaFileAlt } from 'react-icons/fa';
 import reportGenerator from '../utils/reportGenerator';
 
 const VerificationResults = ({ setIsAuthenticated }) => {
@@ -10,29 +24,19 @@ const VerificationResults = ({ setIsAuthenticated }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load verification result from localStorage
     const results = JSON.parse(localStorage.getItem('landVerificationResults')) || [];
     const foundResult = results.find(r => r.id === id);
     setResult(foundResult);
-    setLoading(false);
+    setTimeout(() => setLoading(false), 800);
   }, [id]);
 
   const downloadReport = (format = 'pdf') => {
     if (!result) return;
-
     if (format === 'pdf') {
-      // Generate and download PDF report
       const filename = `land_verification_report_${result.documentName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
       reportGenerator.downloadReport(result, filename);
     } else {
-      // Download JSON report as fallback
-      const reportData = {
-        documentName: result.documentName,
-        verificationDate: new Date().toLocaleDateString(),
-        status: result.status,
-        ...result
-      };
-
+      const reportData = { ...result, verificationDate: new Date().toLocaleDateString() };
       const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -47,237 +51,175 @@ const VerificationResults = ({ setIsAuthenticated }) => {
 
   if (loading) {
     return (
-      <>
-        <Navigation setIsAuthenticated={setIsAuthenticated} />
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-500"></div>
-            <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">Loading verification results...</p>
+      <div className="min-h-screen bg-brand-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+            <div className="w-16 h-16 border-2 border-white/5 rounded-full" />
+            <motion.div 
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-0 w-16 h-16 border-t-2 border-white rounded-full"
+            />
           </div>
+          <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/40">Syncing with Registry...</p>
         </div>
-      </>
+      </div>
     );
   }
 
   if (!result) {
     return (
-      <>
-        <Navigation setIsAuthenticated={setIsAuthenticated} />
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-          <div className="text-center">
-            <FaTimesCircle className="mx-auto h-16 w-16 text-red-500 mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Verification Result Not Found
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              The requested verification result could not be found.
-            </p>
-            <Link
-              to="/land-verification"
-              className="bg-primary-600 text-white px-6 py-3 rounded-md hover:bg-primary-700 transition-colors"
-            >
-              Start New Verification
-            </Link>
-          </div>
+      <div className="min-h-screen bg-brand-background flex items-center justify-center">
+        <div className="text-center spellbook-glass p-12 rounded-[32px]">
+          <XCircle className="w-12 h-12 text-red-400 mx-auto mb-6" />
+          <h2 className="text-2xl font-serif mb-4">Record Missing</h2>
+          <Link to="/land-verification" className="spellbook-btn-secondary">Begin New Audit</Link>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-brand-background text-white selection:bg-white/10">
       <Navigation setIsAuthenticated={setIsAuthenticated} />
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          {/* Header */}
-          <div className="flex items-center mb-6">
-            <Link
-              to="/history"
-              className="mr-4 p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              <FaArrowLeft />
+      
+      <main className="pt-32 pb-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Header Actions */}
+          <div className="flex items-center justify-between mb-12">
+            <Link to="/history" className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-white/40 hover:text-white transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+              History Archive
             </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Verification Results
-              </h1>
-              <p className="text-gray-600 dark:text-gray-300 mt-1">
-                Document: {result.documentName}
-              </p>
+            <div className="flex gap-3">
+              <button onClick={() => downloadReport('pdf')} className="spellbook-btn-secondary py-2 px-6 text-xs group">
+                <Download className="w-3 h-3 group-hover:translate-y-0.5 transition-transform" />
+                Export Ledger
+              </button>
             </div>
           </div>
 
-          {/* Status Overview */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Verification Status
-              </h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => downloadReport('pdf')}
-                  className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
-                  title="Download PDF Report"
-                >
-                  <FaFilePdf />
-                  PDF Report
-                </button>
-                <button
-                  onClick={() => downloadReport('json')}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                  title="Download JSON Data"
-                >
-                  <FaFileAlt />
-                  JSON Data
-                </button>
-              </div>
+          {/* Status Hero */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={`spellbook-glass p-12 rounded-[40px] mb-12 relative overflow-hidden text-center border-t-2 ${result.isLegal ? 'border-emerald-500/20' : 'border-red-500/20'}`}
+          >
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-8 bg-white/5 border ${result.isLegal ? 'border-emerald-500/20' : 'border-red-500/20'}`}>
+              {result.isLegal ? <ShieldCheck className="w-10 h-10 text-emerald-400" /> : <AlertTriangle className="w-10 h-10 text-red-400" />}
             </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-3 ${
-                  result.isLegal ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'
-                }`}>
-                  {result.isLegal ? (
-                    <FaCheckCircle className="text-green-600 dark:text-green-400 text-2xl" />
-                  ) : (
-                    <FaTimesCircle className="text-red-600 dark:text-red-400 text-2xl" />
-                  )}
-                </div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">Document Legality</h3>
-                <p className={`text-sm ${result.isLegal ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                  {result.isLegal ? 'Legal & Valid' : 'Issues Found'}
-                </p>
-              </div>
-
-              <div className="text-center">
-                <div className="mx-auto w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mb-3">
-                  <FaCheckCircle className="text-blue-600 dark:text-blue-400 text-2xl" />
-                </div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">Ownership Type</h3>
-                <p className="text-sm text-blue-600 dark:text-blue-400">
-                  {result.ownershipType}
-                </p>
-              </div>
-
-              <div className="text-center">
-                <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-3">
-                  <span className="text-gray-600 dark:text-gray-300 text-xl font-bold">
-                    {result.confidence}%
-                  </span>
-                </div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">Confidence Score</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Verification Accuracy
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Document Details */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Document Information
-            </h2>
             
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Document Type</label>
-                  <p className="text-gray-900 dark:text-white">{result.documentType}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Survey Number</label>
-                  <p className="text-gray-900 dark:text-white">{result.surveyNumber}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Area</label>
-                  <p className="text-gray-900 dark:text-white">{result.area}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Owner</label>
-                  <p className="text-gray-900 dark:text-white">{result.owner}</p>
-                </div>
-              </div>
+            <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/40 mb-4 block">Audit Conclusion</span>
+            <h1 className="text-4xl md:text-5xl font-serif mb-6">
+              {result.isLegal ? 'Territory Validated' : 'Discrepancy Detected'}
+            </h1>
+            <p className="text-white/40 max-w-lg mx-auto mb-10 text-sm">
+              The neural cross-reference with regional land registries has concluded for {result.documentName}.
+            </p>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">District</label>
-                  <p className="text-gray-900 dark:text-white">{result.district}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Taluk</label>
-                  <p className="text-gray-900 dark:text-white">{result.taluk}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Village</label>
-                  <p className="text-gray-900 dark:text-white">{result.village}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Verification Date</label>
-                  <p className="text-gray-900 dark:text-white">{result.uploadDate}</p>
-                </div>
+            <div className="flex justify-center gap-12 border-t border-white/5 pt-10">
+              <div>
+                <p className="text-[10px] uppercase font-bold text-white/20 mb-1">Authenticity</p>
+                <p className="text-2xl font-serif">{result.confidence}%</p>
+              </div>
+              <div className="w-px h-10 bg-white/5" />
+              <div>
+                <p className="text-[10px] uppercase font-bold text-white/20 mb-1">State Type</p>
+                <p className="text-2xl font-serif text-emerald-400/80">{result.ownershipType}</p>
               </div>
             </div>
-          </div>
 
-          {/* Verification Details */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Verification Checks
-            </h2>
-            
-            <div className="space-y-3">
-              {Object.entries(result.verificationDetails).map(([key, value]) => (
-                <div key={key} className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
-                  <span className="text-gray-700 dark:text-gray-300 capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {value === true || value === 'Registered' || value === 'Current' ? (
-                      <FaCheckCircle className="text-green-500" />
-                    ) : value === false ? (
-                      <FaTimesCircle className="text-red-500" />
-                    ) : (
-                      <FaExclamationTriangle className="text-yellow-500" />
-                    )}
-                    <span className={`text-sm ${
-                      value === true || value === 'Registered' || value === 'Current' 
-                        ? 'text-green-600 dark:text-green-400' 
-                        : value === false 
-                        ? 'text-red-600 dark:text-red-400' 
-                        : 'text-yellow-600 dark:text-yellow-400'
-                    }`}>
-                      {typeof value === 'boolean' ? (value ? 'Verified' : 'Failed') : value}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+            <div className={`absolute top-0 right-0 w-64 h-64 blur-3xl opacity-10 rounded-full translate-x-1/2 -translate-y-1/2 ${result.isLegal ? 'bg-emerald-500' : 'bg-red-500'}`} />
+          </motion.div>
 
-          {/* Discrepancies (if any) */}
-          {result.discrepancies && result.discrepancies.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <FaExclamationTriangle className="text-yellow-500" />
-                Discrepancies Found
-              </h2>
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+            {/* Information Grid */}
+            <div className="spellbook-glass p-8 rounded-[32px] space-y-8">
+              <div className="flex items-center gap-3 text-white/40 mb-2">
+                <Database className="w-4 h-4" />
+                <span className="text-[10px] uppercase tracking-widest font-bold">Metadata Extraction</span>
+              </div>
               
-              <div className="space-y-3">
-                {result.discrepancies.map((discrepancy, index) => (
-                  <div key={index} className="p-4 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-                    <p className="text-yellow-800 dark:text-yellow-200">{discrepancy}</p>
+              <div className="grid grid-cols-2 gap-y-6 text-sm">
+                <div>
+                  <p className="text-[10px] text-white/20 uppercase font-bold mb-1">Survey Identifier</p>
+                  <p className="font-serif">{result.surveyNumber}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-white/20 uppercase font-bold mb-1">Dimension</p>
+                  <p className="font-serif">{result.area}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-white/20 uppercase font-bold mb-1">Owner of Record</p>
+                  <p className="font-serif">{result.owner}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-white/20 uppercase font-bold mb-1">Village</p>
+                  <p className="font-serif">{result.village}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Verification Checklist */}
+            <div className="spellbook-glass p-8 rounded-[32px] space-y-6">
+              <div className="flex items-center gap-3 text-white/40 mb-2">
+                <Globe className="w-4 h-4" />
+                <span className="text-[10px] uppercase tracking-widest font-bold">Protocol Checks</span>
+              </div>
+
+              <div className="space-y-4">
+                {Object.entries(result.verificationDetails).map(([key, value]) => (
+                  <div key={key} className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
+                    <span className="text-xs text-white/60 capitalize">
+                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-[10px] font-bold uppercase tracking-tighter ${
+                        value === true || value === 'Registered' || value === 'Current' 
+                          ? 'text-emerald-400' 
+                          : 'text-red-400'
+                      }`}>
+                        {typeof value === 'boolean' ? (value ? 'Verified' : 'Flagged') : value}
+                      </span>
+                      {value === true || value === 'Registered' || value === 'Current' ? (
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400/40" />
+                      ) : (
+                        <AlertTriangle className="w-3 h-3 text-red-500/40" />
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
-          )}
+          </div>
 
+          {/* Discrepancies */}
+          <AnimatePresence>
+            {result.discrepancies && result.discrepancies.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-10 rounded-[32px] bg-red-500/[0.03] border border-red-500/10"
+              >
+                <div className="flex items-center gap-4 mb-6">
+                  <AlertTriangle className="w-6 h-6 text-red-400" />
+                  <h2 className="text-xl font-serif text-red-200">Critical Observations</h2>
+                </div>
+                <ul className="space-y-4">
+                  {result.discrepancies.map((d, i) => (
+                    <li key={i} className="flex items-center gap-4 text-sm text-red-200/50 italic border-l-2 border-red-500/20 pl-6 py-2">
+                      {d}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </div>
-    </>
+      </main>
+
+      <div className="fixed bottom-0 right-0 w-[600px] h-[600px] aura-glow opacity-5 pointer-events-none" />
+    </div>
   );
 };
 

@@ -1,103 +1,284 @@
-import { useNavigate } from 'react-router-dom';
-import { FaFileContract, FaShieldAlt, FaArrowRight } from 'react-icons/fa';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Shield, 
+  FileText, 
+  ChevronRight, 
+  Lock, 
+  Search, 
+  Cpu, 
+  ArrowUpRight 
+} from 'lucide-react';
+import { hasAcceptedTerms } from '../utils/termsManager';
 
-const Landing = () => {
+const Landing = ({ setIsAuthenticated = () => {} }) => {
   const navigate = useNavigate();
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  const handleProceed = () => {
-    navigate('/terms');
+  useEffect(() => {
+    setIsLoaded(true);
+    const termsAccepted = hasAcceptedTerms();
+    setAcceptedTerms(termsAccepted);
+
+    // If already authenticated, redirect
+    const token = localStorage.getItem('token');
+    if (token) navigate('/dashboard');
+  }, [navigate]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!email || !password || (!isLogin && !name)) {
+      setError('All fields are required');
+      return;
+    }
+    if (!acceptedTerms) {
+      setError('Acceptance of Terms is required.');
+      return;
+    }
+
+    try {
+      const mockUser = { id: '123', name: isLogin ? 'Explorer' : name, email };
+      localStorage.setItem('user', JSON.stringify(mockUser));
+      localStorage.setItem('token', 'premium-access-token');
+      setIsAuthenticated(true);
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Authentication failed. Please try again.');
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-2xl text-center">
-        <div className="mx-auto h-20 w-20 rounded-xl bg-gradient-to-tr from-primary-600 to-blue-500 flex items-center justify-center">
-          <FaFileContract className="h-10 w-10 text-white" />
-        </div>
-        <h1 className="mt-6 text-5xl font-extrabold tracking-tight text-gray-900">
-          Welcome to ClauseWise
-        </h1>
-        <p className="mt-4 text-xl text-gray-600">
-          AI-Powered Legal Document Analysis Platform
-        </p>
-        <p className="mt-2 text-lg text-gray-500">
-          Advanced contract analysis and land verification services
-        </p>
-      </div>
+    <div className="relative min-h-screen overflow-hidden bg-brand-background text-white selection:bg-white/10 selection:text-white">
+      {/* Background Auras */}
+      <div className="aura-glow top-[-10%] left-[-10%] w-[600px] h-[600px] opacity-20" />
+      <div className="aura-glow bottom-[-10%] right-[-10%] w-[600px] h-[600px] opacity-10" />
 
-      <div className="mt-12 sm:mx-auto sm:w-full sm:max-w-2xl">
-        <div className="glass py-8 px-6 rounded-2xl">
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-6">
-              <FaShieldAlt className="h-8 w-8 text-primary-600 mr-3" />
-              <h2 className="text-2xl font-semibold text-gray-900">
-                Legal Compliance Required
+      {/* Navigation Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4">
+        <nav className="max-w-7xl mx-auto flex items-center justify-between spellbook-glass rounded-full px-6 py-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+              <Shield className="w-5 h-5 text-brand-background" />
+            </div>
+            <span className="font-serif text-xl tracking-tighter">ClauseWise</span>
+          </div>
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-white/60">
+            <a href="#features" className="hover:text-white transition-colors">Features</a>
+            <a href="#security" className="hover:text-white transition-colors">Security</a>
+            <a href="/terms" className="hover:text-white transition-colors">Terms</a>
+          </div>
+          <button 
+            onClick={() => document.getElementById('auth-section').scrollIntoView({ behavior: 'smooth' })}
+            className="spellbook-btn-primary py-2 px-6 text-sm"
+          >
+            Get Started
+          </button>
+        </nav>
+      </header>
+
+      {/* Hero Section */}
+      <main className="pt-32 pb-20 px-6">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white/60 mb-6 tracking-wide uppercase">
+              <span className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" />
+              Award Winning Contract AI
+            </div>
+            <h1 className="text-6xl md:text-8xl font-serif leading-[1.1] text-gradient mb-8">
+              The Future of <br />
+              <span className="italic">Legal Intelligence.</span>
+            </h1>
+            <p className="text-xl text-white/50 leading-relaxed mb-10 max-w-lg">
+              ClauseWise uses advanced neural networks to analyze, summarize, and verify complex legal documents in seconds instead of hours.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button 
+                onClick={() => document.getElementById('auth-section').scrollIntoView({ behavior: 'smooth' })}
+                className="spellbook-btn-primary group"
+              >
+                Access Platform
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+              <button className="spellbook-btn-secondary">
+                View Demo
+              </button>
+            </div>
+
+            <div className="mt-16 flex items-center gap-8 grayscale-0 opacity-40">
+              <div className="flex flex-col">
+                <span className="text-2xl font-serif">99.2%</span>
+                <span className="text-[10px] uppercase tracking-widest text-white/40">Accuracy Rate</span>
+              </div>
+              <div className="h-8 w-px bg-white/10" />
+              <div className="flex flex-col">
+                <span className="text-2xl font-serif">1.4k+</span>
+                <span className="text-[10px] uppercase tracking-widest text-white/40">Contracts Analyzed</span>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div 
+            id="auth-section"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 0.2 }}
+            className="relative"
+          >
+            <div className="aura-glow top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] opacity-30" />
+            
+            <div className="spellbook-glass p-8 md:p-10 rounded-[32px] relative z-10">
+              <h2 className="text-3xl font-serif mb-2">
+                {isLogin ? 'Welcome Back' : 'Create Account'}
               </h2>
-            </div>
-            
-            <p className="text-gray-700 mb-6 text-lg">
-              Before accessing our legal document analysis services, we require you to review and accept our Terms and Conditions and Privacy Policy. This ensures compliance with Indian legal requirements and protects both you and our platform.
-            </p>
+              <p className="text-white/40 text-sm mb-8">
+                {isLogin ? 'Enter your credentials to access the laboratory.' : 'Join the new era of legal document analysis.'}
+              </p>
 
-            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-              <div className="flex">
-                <div className="ml-3">
-                  <p className="text-sm text-blue-700">
-                    <strong>Important:</strong> Our platform handles sensitive legal documents and personal information. 
-                    By proceeding, you acknowledge that you will review our legal terms and privacy policy.
-                  </p>
+              {error && (
+                <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-xs flex items-center gap-3">
+                  <Lock className="w-4 h-4" />
+                  {error}
                 </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {!isLogin && (
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-white/40 mb-2 ml-1">Full Name</label>
+                    <input 
+                      type="text" 
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/[0.07] transition-all"
+                      placeholder="Alexander Hamilton"
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-white/40 mb-2 ml-1">Email Address</label>
+                  <input 
+                    type="email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/[0.07] transition-all"
+                    placeholder="alex@clausewise.ai"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-white/40 mb-2 ml-1">Secure Password</label>
+                  <input 
+                    type="password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/[0.07] transition-all"
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                <div className="flex items-start gap-3 py-2">
+                  <input 
+                    type="checkbox" 
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="mt-1 accent-white" 
+                  />
+                  <span className="text-[11px] text-white/40 leading-relaxed">
+                    I acknowledge and agree to the <Link to="/terms" className="text-white hover:underline">Terms & Conditions</Link> and <Link to="/privacy" className="text-white hover:underline">Privacy Policy</Link>.
+                  </span>
+                </div>
+
+                <button type="submit" className="spellbook-btn-primary w-full mt-4">
+                  {isLogin ? 'Authorize Access' : 'Create Identity'}
+                </button>
+              </form>
+
+              <div className="mt-8 flex flex-col items-center gap-6">
+                <div className="flex items-center gap-4 w-full">
+                  <div className="h-px bg-white/5 flex-1" />
+                  <span className="text-[10px] uppercase tracking-widest text-white/20 font-semibold text-center">Identity Switch</span>
+                  <div className="h-px bg-white/5 flex-1" />
+                </div>
+                
+                <button 
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="text-xs text-white/40 hover:text-white transition-colors flex items-center gap-2"
+                >
+                  {isLogin ? "Don't have an account?" : "Already have an account?"}
+                  <span className="text-white font-medium">{isLogin ? "Register here" : "Sign in here"}</span>
+                </button>
               </div>
             </div>
 
-            <button
-              onClick={handleProceed}
-              className="btn-primary flex items-center justify-center mx-auto text-lg px-8 py-3"
-            >
-              <FaArrowRight className="mr-2" />
-              Review Terms & Continue
-            </button>
+            {/* Decorative Floating Elements */}
+            <div className="absolute -top-6 -right-6 w-24 h-24 spellbook-glass rounded-2xl flex items-center justify-center animate-float hidden md:flex">
+              <Cpu className="w-8 h-8 text-white/60" />
+            </div>
+            <div className="absolute -bottom-6 -left-6 w-20 h-20 spellbook-glass rounded-full flex items-center justify-center animate-float [animation-delay:1.5s] hidden md:flex">
+              <Search className="w-6 h-6 text-white/60" />
+            </div>
+          </motion.div>
+        </div>
+      </main>
 
-            <p className="mt-4 text-sm text-gray-500">
-              By clicking "Review Terms & Continue", you acknowledge that you will be presented with our Terms and Conditions and Privacy Policy for your review and acceptance.
+      {/* Feature Grid */}
+      <section id="features" className="max-w-7xl mx-auto px-6 py-32 border-t border-white/5">
+        <div className="grid md:grid-cols-3 gap-12">
+          <div className="space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+              <Cpu className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-2xl font-serif">Neural Analysis</h3>
+            <p className="text-white/40 leading-relaxed text-sm">
+              Our models go beyond simple keywords, understanding the semantic intent and legal nuances of your documents.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-2xl font-serif">Native PDF Support</h3>
+            <p className="text-white/40 leading-relaxed text-sm">
+              Process multi-page PDFs instantly with our new high-accuracy extraction engine. No slow OCR fallbacks.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+              <Lock className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-2xl font-serif">Safe Harbor</h3>
+            <p className="text-white/40 leading-relaxed text-sm">
+              Your documents never leave our secure extraction environment. Enterprise-grade encryption at every step.
             </p>
           </div>
         </div>
+      </section>
 
-        <div className="mt-8 text-center">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="glass p-4 rounded-lg">
-              <div className="h-12 w-12 bg-primary-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <FaFileContract className="h-6 w-6 text-primary-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Document Analysis</h3>
-              <p className="text-sm text-gray-600">
-                AI-powered contract and legal document analysis
-              </p>
-            </div>
-            
-            <div className="glass p-4 rounded-lg">
-              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <FaShieldAlt className="h-6 w-6 text-blue-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Legal Compliance</h3>
-              <p className="text-sm text-gray-600">
-                Compliant with Indian legal framework
-              </p>
-            </div>
-            
-            <div className="glass p-4 rounded-lg">
-              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <FaShieldAlt className="h-6 w-6 text-green-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Data Security</h3>
-              <p className="text-sm text-gray-600">
-                Enterprise-grade security and privacy protection
-              </p>
-            </div>
-          </div>
+      {/* Footer */}
+      <footer className="max-w-7xl mx-auto px-6 py-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="flex items-center gap-2 opacity-50">
+          <Shield className="w-4 h-4" />
+          <span className="font-serif text-sm">ClauseWise</span>
         </div>
-      </div>
+        <div className="flex items-center gap-8 text-[10px] uppercase tracking-widest font-semibold text-white/30">
+          <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+          <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+          <a href="#" className="hover:text-white transition-colors">Status</a>
+        </div>
+        <div className="text-[10px] uppercase tracking-widest text-white/20">
+          © 2026 ClauseWise Intelligence. All Rights Reserved.
+        </div>
+      </footer>
     </div>
   );
 };

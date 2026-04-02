@@ -4,22 +4,17 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: [
-          'Inter',
-          'ui-sans-serif',
-          'system-ui',
-          '-apple-system',
-          'Segoe UI',
-          'Roboto',
-          'Helvetica Neue',
-          'Arial',
-          'Noto Sans',
-          'sans-serif',
-          'Apple Color Emoji',
-          'Segoe UI Emoji'
-        ]
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['Playfair Display', 'serif'],
       },
       colors: {
+        brand: {
+          background: '#0F1214',
+          foreground: '#FFFFFF',
+          muted: '#222729',
+          accent: '#FFFFFF',
+          glow: 'rgba(29, 39, 54, 0.16)',
+        },
         primary: {
           50: '#f5f3ff',
           100: '#ede9fe',
@@ -31,11 +26,16 @@ module.exports = {
           700: '#6d28d9',
           800: '#5b21b6',
           900: '#4c1d95',
-          950: '#2e1065'
+          950: '#2e1065',
         }
       },
       boxShadow: {
-        'elevated': '0 10px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)'
+        'elevated': '0 10px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
+        'premium': '0 0 40px -10px rgba(0, 0, 0, 0.3)',
+        'glow': '0 0 20px rgba(255, 255, 255, 0.1)',
+      },
+      backdropBlur: {
+        'xs': '2px',
       }
     },
   },

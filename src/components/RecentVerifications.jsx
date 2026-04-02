@@ -1,15 +1,24 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaDownload, FaFilePdf, FaFileAlt, FaEye } from 'react-icons/fa';
+import { 
+  Download, 
+  FileText, 
+  Eye, 
+  MapPin, 
+  ShieldCheck, 
+  ShieldAlert,
+  ChevronRight,
+  Clock
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import reportGenerator from '../utils/reportGenerator';
 
 const RecentVerifications = () => {
   const [recentResults, setRecentResults] = useState([]);
 
   useEffect(() => {
-    // Load recent verification results from localStorage
     const results = JSON.parse(localStorage.getItem('landVerificationResults')) || [];
-    setRecentResults(results.slice(0, 5)); // Show only last 5 results
+    setRecentResults(results.slice(0, 5));
   }, []);
 
   const downloadReport = (result, format = 'pdf') => {
@@ -17,14 +26,7 @@ const RecentVerifications = () => {
       const filename = `land_verification_report_${result.documentName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
       reportGenerator.downloadReport(result, filename);
     } else {
-      // Download JSON report
-      const reportData = {
-        documentName: result.documentName,
-        verificationDate: new Date().toLocaleDateString(),
-        status: result.status,
-        ...result
-      };
-
+      const reportData = { ...result, verificationDate: new Date().toLocaleDateString() };
       const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -39,83 +41,67 @@ const RecentVerifications = () => {
 
   if (recentResults.length === 0) {
     return (
-      <div className="text-center py-8">
-        <div className="text-gray-400 dark:text-gray-500 mb-2">
-          <FaFileAlt className="mx-auto h-12 w-12" />
-        </div>
-        <p className="text-gray-500 dark:text-gray-400">
-          No verification results yet. Upload documents to get started.
+      <div className="spellbook-glass p-12 rounded-[32px] text-center border-white/5">
+        <MapPin className="mx-auto h-12 w-12 text-white/5 mb-6" />
+        <p className="text-white/20 italic text-sm">
+          No historical validations found in this registry.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {recentResults.map((result) => (
-        <div
+    <div className="space-y-4">
+      {recentResults.map((result, idx) => (
+        <motion.div
           key={result.id}
-          className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: idx * 0.05 }}
+          className="spellbook-glass p-6 rounded-[28px] group hover:bg-white/[0.04] transition-all border-white/5 hover:border-white/10"
         >
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-2">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                {result.documentName}
-              </h3>
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                result.isLegal 
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-              }`}>
-                {result.isLegal ? 'Verified' : 'Issues'}
-              </span>
+          <div className="flex flex-col md:flex-row md:items-center gap-6">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border transition-all ${result.isLegal ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-red-500/5 border-red-500/10'}`}>
+              {result.isLegal ? <ShieldCheck className="w-5 h-5 text-emerald-400/60" /> : <ShieldAlert className="w-5 h-5 text-red-500/60" />}
             </div>
-            <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-              <span>{result.documentType}</span>
-              <span>{result.surveyNumber}</span>
-              <span>{result.uploadDate}</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2 ml-4">
-            <Link
-              to={`/verification-results/${result.id}`}
-              className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
-              title="View Details"
-            >
-              <FaEye />
-            </Link>
-            
-            <div className="relative group">
-              <button
-                className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition-colors"
-                title="Download Reports"
-              >
-                <FaDownload />
-              </button>
-              
-              {/* Download dropdown */}
-              <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                <div className="py-1">
-                  <button
-                    onClick={() => downloadReport(result, 'pdf')}
-                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <FaFilePdf className="text-red-500" />
-                    PDF Report
-                  </button>
-                  <button
-                    onClick={() => downloadReport(result, 'json')}
-                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <FaFileAlt className="text-blue-500" />
-                    JSON Data
-                  </button>
-                </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-2">
+                <h3 className="text-lg font-serif truncate text-white/80 group-hover:text-white transition-colors">
+                  {result.documentName}
+                </h3>
+                <span className={`px-2 py-0.5 rounded-md text-[9px] uppercase tracking-widest font-bold ${
+                  result.isLegal ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                }`}>
+                  {result.isLegal ? 'Verified' : 'Flagged'}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-6 text-[10px] uppercase tracking-widest font-bold text-white/20">
+                <span className="flex items-center gap-2"><FileText className="w-3 h-3" /> {result.documentType}</span>
+                <span className="flex items-center gap-2"><MapPin className="w-3 h-3" /> {result.surveyNumber}</span>
+                <span className="flex items-center gap-2"><Clock className="w-3 h-3" /> {result.uploadDate}</span>
               </div>
             </div>
+
+            <div className="flex items-center gap-4">
+              <Link
+                to={`/verification-results/${result.id}`}
+                className="p-3 text-white/20 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                title="View Conclusion"
+              >
+                <Eye className="w-5 h-5" />
+              </Link>
+              
+              <button
+                onClick={() => downloadReport(result, 'pdf')}
+                className="p-3 text-white/20 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                title="Export Audit"
+              >
+                <Download className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );

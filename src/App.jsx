@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
-import Login from './pages/Login';
+
 import Dashboard from './pages/Dashboard';
 import UploadContract from './pages/UploadContract';
 import ContractHistory from './pages/ContractHistory';
@@ -17,30 +17,20 @@ import { hasAcceptedTerms } from './utils/termsManager';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const terms = hasAcceptedTerms();
     setIsAuthenticated(!!token);
-    setTermsAccepted(terms);
   }, []);
 
   return (
     <Router>
       <Routes>
-        <Route path="/terms" element={
-          <TermsAndConditions 
-            onAccept={() => setTermsAccepted(true)}
-            onDecline={() => setTermsAccepted(false)}
-          />
-        } />
+        <Route path="/landing" element={<Landing setIsAuthenticated={setIsAuthenticated} />} />
+        <Route path="/login" element={<Navigate to="/landing" replace />} />
         
+        <Route path="/terms" element={<TermsAndConditions />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
-        
-        <Route path="/landing" element={<Landing />} />
-        
-        <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
         
         {/* Protected Routes */}
         <Route path="/dashboard" element={
@@ -87,7 +77,7 @@ function App() {
         
         <Route path="/" element={
           <Navigate to={
-            isAuthenticated ? "/dashboard" : "/login"
+            isAuthenticated ? "/dashboard" : "/landing"
           } replace />
         } />
       </Routes>
